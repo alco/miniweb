@@ -1,4 +1,4 @@
-defmodule MicroWebExample do
+defmodule MicroWebExample.Router do
   use MicroWeb.Router
 
   handle "/",
@@ -14,11 +14,15 @@ defmodule MicroWebExample do
   handle _,    _, MicroWeb.MethodNotAllowedHandler
 end
 
+
 defmodule MicroWebExample.APIHandler do
   use MicroWeb.Handler
 
   def handle(...) do
-    reply(200, content |> to_json)
+    #reply(200, content |> to_json)
     #reply_file(200, path)
   end
 end
+
+
+MicroWeb.Server.start(router: MicroWebExample.Router)

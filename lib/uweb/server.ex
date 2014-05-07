@@ -20,6 +20,8 @@ defmodule MicroWeb.Server do
   Starts the server. Available options:
 
     * port    -- port number listen on
+    * router  -- a module that implements the router API
+                 (will be used instead of handler if provided)
     * handler -- a function of one argument
 
   """
@@ -50,12 +52,14 @@ defmodule MicroWeb.Server do
 
   # Spawn a new process to handle communication over the socket.
   defp spawn_client(sock, options) do
-    handler = Keyword.get(options, :handler)
-    pid = spawn(fn -> client_start(sock, handler) end)
+    if handler = options[:handler], do: req_handler = {:fun, handler}
+    if router = options[:router], do: req_handler = {:module, router}
+
+    pid = spawn(fn -> client_start(sock, req_handler) end)
     :ok = :gen_tcp.controlling_process(sock, pid)
   end
 
-  defp client_start(sock, handler) do
+  defp client_start(sock, req_handler) do
     pid = self()
 
     # Get info about the client
@@ -67,14 +71,14 @@ defmodule MicroWeb.Server do
         log "#{inspect pid}: got connection from an unknown client (#{reason})"
     end
 
-    client_loop(sock, handler, nil, %HttpState{})
+    client_loop(sock, req_handler, nil, %HttpState{})
   end
 
   # The receive loop which waits for a packet from the client, then invokes the
   # handler function and sends its return value back to the client.
   def client_loop(
     sock,
-    handler,
+    req_handler,
     state,
     http_state
   ) do
@@ -86,21 +90,26 @@ defmodule MicroWeb.Server do
       {:http, ^sock, {:http_request, method, uri, _version}} ->
         log "#{inspect pid}: got initial request #{method} #{inspect uri}"
         new_http_state = %HttpState{http_state | method: method, uri: uri}
-        client_loop(sock, handler, state, new_http_state)
+        client_loop(sock, req_handler, state, new_http_state)
 
       {:http, ^sock, {:http_header, _, field, _reserved, value}} ->
         log "#{inspect pid}: got header #{field}: #{value}"
         new_http_state = Map.update!(http_state, :headers, &[{field, value}|&1])
-        client_loop(sock, handler, state, new_http_state)
+        client_loop(sock, req_handler, state, new_http_state)
 
       {:http, ^sock, :http_eoh} ->
         method = http_state.method
         uri = http_state.uri
         log "#{inspect pid}: processing request #{method} #{inspect uri}"
-        if handler do
-          case handler.({method, uri}, state) do
+        if req_handler do
+          case handle_req(req_handler, {method, uri}, state) do
             {:reply, data, _new_state } ->
-              :gen_tcp.send(sock, data)
+              length = byte_size(data)
+              :gen_tcp.send(sock, "HTTP/1.1 200 OK\r\nContent-Length: #{length}\r\n\r\n#{data}")
+              #client_loop(sock, handler, new_state, http_state)
+              client_close(sock)
+
+            {:noreply, _new_state } ->
               #client_loop(sock, handler, new_state, http_state)
               client_close(sock)
 
@@ -123,6 +132,12 @@ defmodule MicroWeb.Server do
         client_close(sock)
     end
   end
+
+  defp handle_req({:fun, handler}, payload, state), do:
+    handler.(payload, state)
+
+  defp handle_req({:module, handler}, {method, path}, state), do:
+    handler.handle(method, path, state)
 
   defp client_close(sock) do
     log "#{inspect self()}: closing connection"
