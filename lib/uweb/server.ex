@@ -28,7 +28,7 @@ defmodule MicroWeb.Server do
   """
   def start(options \\ []) do
     port = Keyword.get(options, :port, @port)
-    case :gen_tcp.listen(port, [{:packet, :http_bin}, {:active, false}]) do
+    case :gen_tcp.listen(port, [{:packet, :http_bin}, {:active, false}, {:reuseaddr, true}]) do
       {:ok, sock} ->
         log "Listening on port #{port}..."
         accept_loop(sock, options)
