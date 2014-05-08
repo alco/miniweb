@@ -2,6 +2,8 @@ defmodule MicroWeb.StockHandlers do
   use MicroWeb.Handler
 
   def static_handler(path, opts, conn) do
+    # Check if it's a head request
+    # Fixme deal with directories
     cond do
       filepath=opts[:file] ->
         reply_file(200, filepath)

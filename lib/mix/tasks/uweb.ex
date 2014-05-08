@@ -10,10 +10,12 @@ defmodule Mix.Tasks.Uweb do
 
   def run(["serve"]) do
     IO.puts "Serving current directory..."
+    serve(".")
   end
 
   def run(["serve", path]) do
     IO.puts "Serving path #{path}..."
+    serve(path)
   end
 
 
@@ -67,4 +69,17 @@ defmodule Mix.Tasks.Uweb do
   end
 
   defp usage(_), do: usage
+
+  ###
+
+  defmodule ServeRouter do
+    @moduledoc false
+    use MicroWeb.Router
+    handle _, [:get, :head], &MicroWeb.StockHandlers.static_handler, root: param(:root_dir)
+  end
+
+  defp serve(path) do
+    router = ServeRouter.init(root_dir: path)
+    MicroWeb.Server.start(router: router)
+  end
 end
