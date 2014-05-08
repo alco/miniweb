@@ -24,7 +24,7 @@ defmodule MicroWeb.Handler do
   def reply(status, opts, conn) do
     headers = opts[:headers] || %{}
     data = opts[:data]
-    if data and !Map.get(headers, "content-length") do
+    if data && !Map.get(headers, "content-length") do
       headers = Map.put(headers, "content-length", byte_size(data))
     end
     reply_http(conn, status, headers, data)
