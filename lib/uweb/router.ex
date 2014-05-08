@@ -1,14 +1,143 @@
+defmodule MicroWeb.Router do
+  @moduledoc """
+  Router definition that provides the routing DSL for user modules.
+
+  ## Example
+
+      defmodule MyRouter do
+        use MicroWeb.Router
+
+        # serve the current working directory
+        handle _, :get, &static_handler
+      end
+
+  """
+
+  @doc false
+  defmacro __using__(_) do
+    quote do
+      @before_compile unquote(__MODULE__)
+
+      import MicroWeb.Router.Mixin
+      import MicroWeb.StockHandlers
+
+      #Module.register_attribute(__MODULE__, :micro_web_router_params, accumulate: true)
+    end
+  end
+
+  @doc false
+  defmacro __before_compile__(_env) do
+    #IO.inspect List.flatten(Module.get_attribute(env.module, :micro_web_router_params))
+    quote do
+      def init(opts) do
+        {__MODULE__, opts}
+      end
+    end
+  end
+end
+
+
 defmodule MicroWeb.Router.Mixin do
+  @moduledoc """
+  MicroWeb.Router.Mixin implements the routing DSL.
+
+  You generally include use it as follows:
+
+      defmodule MyRouter do
+        use MicroWeb.Router
+
+        handle _, :get, &static_handler
+      end
+
+  """
+
+  @doc """
+  Autodefined function the creates an instance of the router to pass to the
+  server.
+  """
+  def init(opts)
+
+  @doc """
+  Autodefined function that check if any of the handlers defined within the
+  router match the given path.
+  """
+  def match?(path)
+
+
+  @doc """
+  Macro that can be used instead of a handler to turn an existing function
+  (that is unaware of the HTTP context it is being used in) into a handler.
+
+  The `opts` argument is optional.
+  """
+  def wrap(function, arguments, opts)
+
+
+  @doc """
+  Declare the list of parameters that will be passed to the `init/1` function.
+  """
+  defmacro params(list) when is_list(list) do
+    # FIXME: implement checking of available parameters
+    #quote do: (@micro_web_router_params unquote(list))
+  end
+
+  @doc """
+  Retrieve the named parameter from the initial value passed to the user
+  router module's `init/1` function.
+
+  ## Example
+
+      defmodule MyRouter do
+        use MicroWeb.Router
+
+        params [:root_dir]
+
+        handle _, :get, &static_handler, root: param(:root_dir)
+      end
+
+      MyRouter.init(root_dir: "...")
+
+  """
   defmacro param(name) when is_atom(name) do
     quote do: var!(_init_opts, nil)[unquote(name)]
   end
 
 
-  defmacro params(list) when is_list(list) do
-    #quote do: (@micro_web_router_params unquote(list))
-  end
+  @doc """
+  Mount another router at the specified path.
+
+  All requests starting with that path will be forwarded to the mounter router.
+  If no handler within that router matches the request, it will continue to
+  check the remaining handlers in the current router.
+
+  The mounted router should match paths starting from the root. The `path`
+  argument passed to the `mount` macro will determine the actual path for the
+  mounted router to use.
+
+  ## Example
+
+      defmodule APIRouter do
+        use MicroWeb.Router
+
+        handle "/hello", :get do
+          reply(200, "hi")
+        end
+      end
 
 
+      defmodule MyRouter do
+        use MicroWeb.Router
+
+        mount "/api", APIRouter
+      end
+
+      APIRouter.match?("/hello")
+      #=> true
+
+      MyRouter.match?("/api/hello")
+      #=> true
+
+  """
   defmacro mount(path, module, opts \\ [])
 
   defmacro mount(path, module, opts)
@@ -32,6 +161,38 @@ defmodule MicroWeb.Router.Mixin do
   end
 
 
+  @doc """
+  Define a handler for the given path and method combination.
+
+  Accepts one method or a list of methods.
+
+  There are two forms of this macro:
+
+     handle(path, methods, handler, opts \\ [])
+
+     handle(path, methods, opts \\ [], do_block)
+
+  In the first form, `handler` can be a function or a wrapped function (see
+  `wrap/3`).
+
+  The second form expects a do-block that implements the handler inline.
+
+  ## Example
+
+      defmodule MyRouter do
+        use MicroWeb.Router
+
+        handle "/", [:get, :head], &static_handler, file: "index.html"
+        handle "/secret", :post, wrap(Utill.store_secret, [])
+
+        handle "/home", :get do
+          reply(200, "Welcome")
+        end
+      end
+
+  """
+  defmacro handle(path, methods, handler_or_do_block)
+
   defmacro handle(path, method, {:&, _, _}=func),
     do: do_handle(path, method, {:func, func}, [], __CALLER__.module)
 
@@ -40,6 +201,13 @@ defmodule MicroWeb.Router.Mixin do
 
   defmacro handle(path, method, {:wrap, _, args}),
     do: do_handle(path, method, {:wrap, args}, [], __CALLER__.module)
+
+
+  @doc """
+  A form of the `handle` macro that also takes a list of options. See
+  `handle/3` for the full description.
+  """
+  defmacro handle(path, methods, _, _)
 
   defmacro handle(path, method, {:&, _, _}=func, opts)
     when is_list(opts),
@@ -52,6 +220,7 @@ defmodule MicroWeb.Router.Mixin do
   defmacro handle(path, method, {:wrap, _, args}, opts),
     do: do_handle(path, method, {:wrap, args}, opts, __CALLER__.module)
 
+  ###
 
   defp do_handle(path, method, handler, opts, caller) do
     methods = List.wrap(method)
@@ -121,8 +290,8 @@ defmodule MicroWeb.Router.Mixin do
         func = {:&, meta, [{:/, meta, [arg, 3]}]}
         quote do: unquote(func).(path, unquote(opts), var!(conn, nil))
 
-      {:wrap, [{fun, _, _}, opts]} ->
-        funcall = {fun, [], opts[:arguments]}
+      {:wrap, [{fun, _, _}, arguments, opts]} ->
+        funcall = {fun, [], arguments}
         quote do
           use MicroWeb.Handler
           val = unquote(funcall)
@@ -134,26 +303,6 @@ defmodule MicroWeb.Router.Mixin do
           use MicroWeb.Handler
           unquote(code)
         end
-    end
-  end
-end
-
-defmodule MicroWeb.Router do
-  defmacro __using__(_) do
-    quote do
-      @before_compile unquote(__MODULE__)
-      import MicroWeb.Router.Mixin
-
-      #Module.register_attribute(__MODULE__, :micro_web_router_params, accumulate: true)
-    end
-  end
-
-  defmacro __before_compile__(_env) do
-    #IO.inspect List.flatten(Module.get_attribute(env.module, :micro_web_router_params))
-    quote do
-      def init(opts) do
-        {__MODULE__, opts}
-      end
     end
   end
 end

@@ -23,8 +23,8 @@ defmodule APIRouter do
 
   handle "/random", :get,
     wrap(Util.random,
-         status: 200,
-         arguments: [query("min", 0), query("max", 100)])
+         [query("min", 0), query("max", 100)],
+         status: 200)
 
   #handle "/random_int", :get do
     #min = query("min", 0)
