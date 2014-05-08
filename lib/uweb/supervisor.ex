@@ -1,4 +1,6 @@
 defmodule MicroWeb.Supervisor do
+  @moduledoc false
+
   use Supervisor.Behaviour
 
   def start_link do

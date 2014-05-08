@@ -1,4 +1,5 @@
 defmodule HttpState do
+  @moduledoc false
   defstruct method: nil, uri: "", headers: []
 end
 

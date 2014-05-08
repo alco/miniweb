@@ -2,6 +2,9 @@ defmodule MicroWeb.Router do
   @moduledoc """
   Router definition that provides the routing DSL for user modules.
 
+  See the docs for `MicroWeb.Router.Mixin` for a detailed overview of the
+  provided functions.
+
   ## Example
 
       defmodule MyRouter do
@@ -168,9 +171,8 @@ defmodule MicroWeb.Router.Mixin do
 
   There are two forms of this macro:
 
-     handle(path, methods, handler, opts \\ [])
-
-     handle(path, methods, opts \\ [], do_block)
+   * `handle(path, methods, handler, opts \\ [])`
+   * `handle(path, methods, opts \\ [], do_block)`
 
   In the first form, `handler` can be a function or a wrapped function (see
   `wrap/3`).

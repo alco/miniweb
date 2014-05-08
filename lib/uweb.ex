@@ -1,4 +1,6 @@
 defmodule MicroWeb do
+  @moduledoc false
+
   use Application.Behaviour
 
   # See http://elixir-lang.org/docs/stable/Application.Behaviour.html
