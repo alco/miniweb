@@ -4,21 +4,21 @@ defmodule MicroWebExample.Router do
   handle "/",
          :get,
          MicroWeb.StaticHandler,
-         file: "priv/static/index.html"
+         file: "example/priv/static/index.html"
 
-  handle "/api/*",
+  handle "/api/...",
          [:get, :post],
          MicroWebExample.APIHandler
 
-  handle _, :get, MicroWeb.StaticHandler, root: "priv/static"
-  handle _,    _, MicroWeb.MethodNotAllowedHandler
+  handle _, :get, MicroWeb.StaticHandler, root: "example/priv/static"
+  handle _,    _, MicroWeb.NotAllowedHandler
 end
 
 
 defmodule MicroWebExample.APIHandler do
   use MicroWeb.Handler
 
-  def handle(...) do
+  def handle(_path, _opts) do
     #reply(200, content |> to_json)
     #reply_file(200, path)
   end

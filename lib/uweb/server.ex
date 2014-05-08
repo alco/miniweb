@@ -88,12 +88,12 @@ defmodule MicroWeb.Server do
 
     receive do
       {:http, ^sock, {:http_request, method, uri, _version}} ->
-        log "#{inspect pid}: got initial request #{method} #{inspect uri}"
+        #log "#{inspect pid}: got initial request #{method} #{inspect uri}"
         new_http_state = %HttpState{http_state | method: method, uri: uri}
         client_loop(sock, req_handler, state, new_http_state)
 
       {:http, ^sock, {:http_header, _, field, _reserved, value}} ->
-        log "#{inspect pid}: got header #{field}: #{value}"
+        #log "#{inspect pid}: got header #{field}: #{value}"
         new_http_state = Map.update!(http_state, :headers, &[{field, value}|&1])
         client_loop(sock, req_handler, state, new_http_state)
 
@@ -102,7 +102,7 @@ defmodule MicroWeb.Server do
         uri = http_state.uri
         log "#{inspect pid}: processing request #{method} #{inspect uri}"
         if req_handler do
-          case handle_req(req_handler, {method, uri}, state) do
+          case handle_req(req_handler, {method, uri}, sock) do
             {:reply, data, _new_state } ->
               length = byte_size(data)
               :gen_tcp.send(sock, "HTTP/1.1 200 OK\r\nContent-Length: #{length}\r\n\r\n#{data}")
@@ -136,11 +136,52 @@ defmodule MicroWeb.Server do
   defp handle_req({:fun, handler}, payload, state), do:
     handler.(payload, state)
 
-  defp handle_req({:module, handler}, {method, path}, state), do:
-    handler.handle(method, path, state)
+  defp handle_req({:module, handler}, {method, path}, state) do
+    handler.handle(normalize_method(method),
+                   normalize_path(path),
+                   state)
+  end
+
+  defp normalize_method(:GET),     do: :get
+  defp normalize_method(:HEAD),    do: :head
+  defp normalize_method(:POST),    do: :post
+  defp normalize_method(:PUT),     do: :put
+  defp normalize_method(:DELETE),  do: :delete
+  defp normalize_method(:OPTIONS), do: :options
+  defp normalize_method(other), do: other
+
+
+  defp normalize_path(:*), do: ["*"]
+
+  defp normalize_path({:absoluteURI, _proto, _host, _port, path}), do:
+    normalize_path(path)
+
+  defp normalize_path({:scheme, scheme, string}), do:
+    raise(ArgumentError, message: "No idea about the scheme: #{inspect scheme} #{inspect string}")
+
+  defp normalize_path({:abs_path, path}), do:
+    normalize_path(path)
+
+  defp normalize_path(path) when is_binary(path) do
+    #IO.puts "INCOMING PATH: #{inspect path}"
+    {path, _query} = case String.split(path, "?", global: false) do
+      [path, query] -> {path, query}
+      [path]        -> {path, nil}
+    end
+
+    String.split(path, "/")
+    |> MicroWeb.Util.strip_list()
+    #|> IO.inspect
+  end
+
 
   defp client_close(sock) do
     log "#{inspect self()}: closing connection"
     :gen_tcp.close(sock)
+  end
+
+
+  def send(sock, data) do
+    :gen_tcp.send(sock, data)
   end
 end
