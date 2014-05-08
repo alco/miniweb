@@ -71,6 +71,8 @@ defmodule MicroWeb.Server do
         log "#{inspect pid}: got connection from an unknown client (#{reason})"
     end
 
+    :random.seed(:erlang.now())
+
     client_loop(sock, req_handler, nil, %HttpState{})
   end
 
@@ -114,7 +116,9 @@ defmodule MicroWeb.Server do
               client_close(sock)
 
             {:close, reply} ->
-              :gen_tcp.send(sock, reply)
+              if reply do
+                :gen_tcp.send(sock, reply)
+              end
               client_close(sock)
           end
         else
@@ -136,10 +140,8 @@ defmodule MicroWeb.Server do
   defp handle_req({:fun, handler}, payload, state), do:
     handler.(payload, state)
 
-  defp handle_req({:module, handler}, {method, path}, state) do
-    handler.handle(normalize_method(method),
-                   normalize_path(path),
-                   state)
+  defp handle_req({:module, {mod, opts}}, {method, path}, sock) do
+    mod.handle(normalize_method(method), normalize_path(path), opts, sock)
   end
 
   defp normalize_method(:GET),     do: :get

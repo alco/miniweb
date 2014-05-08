@@ -1,8 +1,7 @@
-defmodule MicroWeb.StaticHandler do
+defmodule MicroWeb.StockHandlers do
   use MicroWeb.Handler
 
-  def handle(path, opts) do
-    #IO.inspect path
+  def static_handler(path, opts, conn) do
     cond do
       filepath=opts[:file] ->
         reply_file(200, filepath)
