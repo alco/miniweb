@@ -155,8 +155,8 @@ defmodule MicroWeb.Router.Mixin do
   defp do_mount(path, module, _opts) do
     components = path_components(path)
     q = quote do
-      def handle(method, [unquote_splicing(components) | rest], init_opts, conn) do
-        unquote(module).handle(method, rest, init_opts, conn)
+      def handle(method, [unquote_splicing(components) | rest], req, init_opts, conn) do
+        unquote(module).handle(method, rest, req, init_opts, conn)
       end
     end
     #q |> Macro.to_string |> IO.puts
@@ -231,9 +231,9 @@ defmodule MicroWeb.Router.Mixin do
     quoted_body = quote_handler(handler, opts)
 
     quoted_head = if match?({:_, _, nil}, method) do
-      quote do: handle(_, unquote(matchspec), var!(_init_opts, nil), var!(conn, nil))
+      quote do: handle(_, unquote(matchspec), var!(_req, nil), var!(_init_opts, nil), var!(conn, nil))
     else
-      quote do: handle(method, unquote(matchspec), var!(_init_opts, nil), var!(conn, nil)) when method in unquote(methods)
+      quote do: handle(method, unquote(matchspec), var!(_req, nil), var!(_init_opts, nil), var!(conn, nil)) when method in unquote(methods)
     end
 
     q = quote do

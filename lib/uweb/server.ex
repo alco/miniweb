@@ -1,6 +1,5 @@
-defmodule HttpState do
-  @moduledoc false
-  defstruct method: nil, uri: "", headers: []
+defmodule HttpReq do
+  defstruct [:method, :path, :query, :headers, :proto, :version, :body]
 end
 
 defmodule MicroWeb.Server do
@@ -74,7 +73,7 @@ defmodule MicroWeb.Server do
 
     :random.seed(:erlang.now())
 
-    client_loop(sock, req_handler, nil, %HttpState{})
+    client_loop(sock, req_handler, %HttpReq{})
   end
 
   # The receive loop which waits for a packet from the client, then invokes the
@@ -82,50 +81,45 @@ defmodule MicroWeb.Server do
   def client_loop(
     sock,
     req_handler,
-    state,
-    http_state
+    req
   ) do
     pid = self()
 
     :inet.setopts(sock, active: :once)
 
     receive do
-      {:http, ^sock, {:http_request, method, uri, _version}} ->
-        #log "#{inspect pid}: got initial request #{method} #{inspect uri}"
-        new_http_state = %HttpState{http_state | method: method, uri: uri}
-        client_loop(sock, req_handler, state, new_http_state)
+      {:http, ^sock, {:http_request, method, uri, version}} ->
+        :inet.setopts(sock, [:binary, {:packet, :httph_bin}, {:active, :once}])
+        log "#{inspect pid}: got initial request #{method} #{inspect uri}"
+        {path, query} = split_uri(uri)
+        updated_req = %HttpReq{req | method: normalize_method(method),
+                                       path: path,
+                                      query: query,
+                                    version: version}
+        client_loop(sock, req_handler, updated_req)
 
       {:http, ^sock, {:http_header, _, field, _reserved, value}} ->
-        #log "#{inspect pid}: got header #{field}: #{value}"
-        new_http_state = Map.update!(http_state, :headers, &[{field, value}|&1])
-        client_loop(sock, req_handler, state, new_http_state)
+        log "#{inspect pid}: got header #{field}: #{value}"
+        updated_req = Map.update(req, :headers, [], &[{to_string(field), value}|&1])
+        client_loop(sock, req_handler, updated_req)
 
       {:http, ^sock, :http_eoh} ->
-        method = http_state.method
-        uri = http_state.uri
-        log "#{inspect pid}: processing request #{method} #{inspect uri}"
+        :inet.setopts(sock, [:binary, {:packet, :raw}, {:active, false}])
+        data = read_request_data(sock, req.headers)
         if req_handler do
-          case handle_req(req_handler, {method, uri}, sock) do
-            {:reply, data, _new_state } ->
+          log "#{inspect pid}: processing request #{req.method} #{req.path}"
+          updated_req = %HttpReq{req | body: data}
+          case handle_req(req_handler, updated_req, sock) do
+            {:reply, data} ->
               length = byte_size(data)
               :gen_tcp.send(sock, "HTTP/1.1 200 OK\r\nContent-Length: #{length}\r\n\r\n#{data}")
-              #client_loop(sock, handler, new_state, http_state)
               client_close(sock)
 
-            {:noreply, _new_state } ->
-              #client_loop(sock, handler, new_state, http_state)
-              client_close(sock)
-
-            {:close, reply} ->
-              if reply do
-                :gen_tcp.send(sock, reply)
-              end
+            :noreply ->
               client_close(sock)
           end
         else
-          # Work like a ping server by default
           :gen_tcp.send(sock, "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok")
-          #client_loop(sock, handler, state, http_state)
           client_close(sock)
         end
 
@@ -138,11 +132,30 @@ defmodule MicroWeb.Server do
     end
   end
 
-  defp handle_req({:fun, handler}, payload, state), do:
-    handler.(payload, state)
 
-  defp handle_req({:module, {mod, opts}}, {method, path}, sock) do
-    mod.handle(normalize_method(method), normalize_path(path), opts, sock)
+  defp read_request_data(sock, headers) do
+    #IO.inspect http_state.headers
+    length_header = Enum.find(headers, fn {header, _} ->
+      header == "Content-Length"
+    end)
+    content_length = case length_header do
+      {_, val} -> binary_to_integer(val)
+      _        -> 0
+    end
+    #IO.inspect sock
+    #IO.inspect content_length
+    case :gen_tcp.recv(sock, content_length) do
+      {:ok, data} -> data
+      {:error, reason} -> raise RuntimeError, 'Could not read request data: #{inspect reason}'
+    end
+  end
+
+
+  defp handle_req({:fun, handler}, req, sock), do:
+    handler.(req, sock)
+
+  defp handle_req({:module, {mod, opts}}, %HttpReq{method: method, path: path}=req, sock) do
+    mod.handle(method, split_path(path), req, opts, sock)
   end
 
   defp normalize_method(:GET),     do: :get
@@ -154,24 +167,29 @@ defmodule MicroWeb.Server do
   defp normalize_method(other), do: other
 
 
-  defp normalize_path(:*), do: ["*"]
+  defp split_uri(:*), do: {"*", ""}
 
-  defp normalize_path({:absoluteURI, _proto, _host, _port, path}), do:
-    normalize_path(path)
+  defp split_uri({:absoluteURI, _proto, _host, _port, qpath}), do:
+    split_uri(qpath)
 
-  defp normalize_path({:scheme, scheme, string}), do:
-    raise(ArgumentError, message: "No idea about the scheme: #{inspect scheme} #{inspect string}")
+  defp split_uri({:scheme, scheme, string}), do:
+    raise(ArgumentError, message: 'No idea about the scheme: #{inspect scheme} #{inspect string}')
 
-  defp normalize_path({:abs_path, path}), do:
-    normalize_path(path)
+  defp split_uri({:abs_path, qpath}), do:
+    split_uri(qpath)
 
-  defp normalize_path(path) when is_binary(path) do
-    #IO.puts "INCOMING PATH: #{inspect path}"
-    {path, _query} = case String.split(path, "?", global: false) do
+  defp split_uri(qpath) do
+    case String.split(qpath, "?", global: false) do
       [path, query] -> {path, query}
-      [path]        -> {path, nil}
+      [path]        -> {path, ""}
     end
+  end
 
+
+  defp split_path("*"), do: ["*"]
+
+  defp split_path(path) when is_binary(path) do
+    #IO.puts "INCOMING PATH: #{inspect path}"
     String.split(path, "/")
     |> MicroWeb.Util.strip_list()
     #|> IO.inspect

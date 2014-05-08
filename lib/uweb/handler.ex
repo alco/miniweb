@@ -71,7 +71,7 @@ defmodule MicroWeb.Handler do
     import Kernel, except: [send: 2]
     import MicroWeb.Server, only: [send: 2]
 
-    status_string = "HTTP/#{@proto_version} #{status} #{symbolic_status(status)}"
+    status_string = "HTTP/#{@proto_version} #{symbolic_status(status)}"
 
     send(conn, status_string <> "\r\n")
     Enum.each(headers, fn {name, value} ->
@@ -79,7 +79,7 @@ defmodule MicroWeb.Handler do
     end)
     send(conn, "\r\n")
     if data, do: send(conn, data)
-    {:close, nil}
+    :noreply
   end
 
 
@@ -146,10 +146,11 @@ defmodule MicroWeb.Handler do
   ]
 
   for {num, string} <- @status_mapping do
-    def symbolic_status(unquote(num)), do: unquote(string)
+    def symbolic_status(unquote(num)=n), do: "#{n} " <> unquote(string)
+    def symbolic_status(unquote(string)=s), do: "#{unquote(num)} " <> s
   end
 
   def symbolic_status(bin) when is_binary(bin) do
-    raise ArgumentError, message: "Unsupported or invalid status #{bin}"
+    raise ArgumentError, message: 'Unsupported or invalid status #{bin}'
   end
 end

@@ -21,6 +21,10 @@ end
 defmodule APIRouter do
   use MicroWeb.Router
 
+  handle "/", :post do
+    reply(201)
+  end
+
   handle "/random", :get,
     wrap(Util.random,
          [query("min", 0), query("max", 100)],
