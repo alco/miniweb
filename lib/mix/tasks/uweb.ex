@@ -1,11 +1,30 @@
 defmodule Mix.Tasks.Uweb do
+  @moduledoc """
+  Single task encapsulating a set of useful commands.
+
+  Synopsis:
+    mix uweb COMMAND [ARG...]
+
+  Commands:
+    help       Show help about given command
+    inspect    Log all incoming requests to stdout
+    proxy      Work as a tunnelling proxy, logging all communications
+    serve      Serve files from the given path (default: .)
+  """
+
   use Mix.Task
 
-  @shortdoc "List uweb tasks"
-
-  @moduledoc "This is a uweb task"
 
   def run([]), do: usage
+
+
+  def run(["help"]), do: usage
+  def run(["help", cmd]), do: usage(cmd)
+
+
+  def run(["inspect"]) do
+    IO.puts "inspecting..."
+  end
 
 
   def run(["serve"]) do
@@ -19,38 +38,24 @@ defmodule Mix.Tasks.Uweb do
   end
 
 
-  def run(["inspect"]) do
-    IO.puts "inspecting..."
-  end
-
-
-  def run(["help"]), do: usage
-  def run(["help", cmd]), do: usage(cmd)
-
-
   def run([cmd|_]), do: usage(cmd)
   def run(_), do: usage
 
+  ###
 
   defp usage do
-    Mix.shell.info """
-    Synopsis:
-      mix uweb COMMAND [ARG...]
+    case __info__(:moduledoc) do
+      {_, binary} when is_binary(binary) ->
+        IO.puts binary
 
-    Commands:
-      serve      Serve files from the given path (default: .)
-      inspect    Log all incoming requests to stdout
-      help       Show help about given command
-    """
+      _ -> IO.puts "#{inspect __MODULE__} was not compiled with docs"
+    end
   end
 
-  defp usage("serve") do
+  defp usage("help") do
     Mix.shell.info """
     Synopsis:
-      mix uweb serve [PATH]
-
-    Arguments:
-      PATH    the directory to serve
+      mix uweb help [COMMAND]
     """
   end
 
@@ -61,10 +66,24 @@ defmodule Mix.Tasks.Uweb do
     """
   end
 
-  defp usage("help") do
+  defp usage("proxy") do
     Mix.shell.info """
     Synopsis:
-      mix uweb help [COMMAND]
+      mix uweb proxy
+    """
+  end
+
+  defp usage("serve") do
+    Mix.shell.info """
+    Synopsis:
+      mix uweb serve [-d] [PATH]
+
+    Arguments:
+      PATH    the directory to serve
+
+    Options:
+      -d      serve HTML file with directory contents for directory requests
+              (by default, directory requests respond with 403 Forbidden)
     """
   end
 
