@@ -1,28 +1,49 @@
-defmodule MicroWebExample.Router do
+defmodule Router do
   use MicroWeb.Router
 
-  handle "/",
-         :get,
-         MicroWeb.StaticHandler,
-         file: "example/priv/static/index.html"
+  import MicroWeb.StockHandlers
 
-  handle "/api/...",
-         [:get, :post],
-         MicroWebExample.APIHandler
+  params [:root_dir]
 
-  handle _, :get, MicroWeb.StaticHandler, root: "example/priv/static"
-  handle _,    _, MicroWeb.NotAllowedHandler
+
+  mount "/api", Elixir.APIRouter
+
+  handle "/", [:head, :get], &static_handler,
+    file: Path.join(param(:root_dir), "index.html")
+
+  handle _,   [:head, :get], &static_handler,
+    root: param(:root_dir)
+
+  handle _, _, do: reply("Forbidden")
 end
 
 
-defmodule MicroWebExample.APIHandler do
-  use MicroWeb.Handler
+defmodule APIRouter do
+  use MicroWeb.Router
 
-  def handle(_path, _opts) do
-    #reply(200, content |> to_json)
-    #reply_file(200, path)
+  handle "/random", :get,
+    wrap(Util.random,
+         status: 200,
+         arguments: [query("min", 0), query("max", 100)])
+
+  #handle "/random_int", :get do
+    #min = query("min", 0)
+    #max = query("max", 0)
+    #reply(200, Util.random(min, max))
+  #end
+
+  handle _, _ do
+    reply(403)
   end
 end
 
 
-MicroWeb.Server.start(router: MicroWebExample.Router)
+defmodule Util do
+  def random(_min, _max) do
+    :random.uniform()
+  end
+end
+
+
+router = Router.init(root_dir: "example/priv/static")
+MicroWeb.Server.start(router: router)
