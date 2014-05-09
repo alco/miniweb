@@ -46,9 +46,9 @@ defmodule Mix.Tasks.Uweb do
   defp usage do
     case __info__(:moduledoc) do
       {_, binary} when is_binary(binary) ->
-        IO.puts binary
+        Mix.shell.info binary
 
-      _ -> IO.puts "#{inspect __MODULE__} was not compiled with docs"
+      _ -> Mix.shell.info "#{inspect __MODULE__} was not compiled with docs"
     end
   end
 
