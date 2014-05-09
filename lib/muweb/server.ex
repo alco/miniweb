@@ -113,6 +113,7 @@ defmodule MuWeb.Server do
 
       {:http, ^sock, :http_eoh} ->
         :inet.setopts(sock, [:binary, {:packet, :raw}, {:active, false}])
+        log "#{inspect pid}: reading request body"
         data = read_request_data(sock, req.headers)
         if req_handler do
           log "#{inspect pid}: processing request #{req.method} #{req.path}"
@@ -158,9 +159,11 @@ defmodule MuWeb.Server do
     end
     #IO.inspect sock
     #IO.inspect content_length
-    case :gen_tcp.recv(sock, content_length) do
-      {:ok, data} -> data
-      {:error, reason} -> raise RuntimeError, 'Could not read request data: #{inspect reason}'
+    if content_length > 0 do
+      case :gen_tcp.recv(sock, content_length) do
+        {:ok, data} -> data
+        {:error, reason} -> raise RuntimeError, 'Could not read request data: #{inspect reason}'
+      end
     end
   end
 
