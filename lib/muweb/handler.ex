@@ -33,9 +33,17 @@ defmodule MuWeb.Handler do
     end
   end
 
-  defmacro query(_, _), do: nil
+  defmacro query(key, default \\ nil) do
+    quote do
+      Map.get(URI.decode_query(var!(_req, nil).query), unquote(key), unquote(default))
+    end
+  end
 
-  def reply(status, data, opts, conn) do
+  defmacro req() do
+    quote do: var!(_req, nil)
+  end
+
+  def reply(status, data, opts, conn) when is_binary(data) do
     headers = opts[:headers] || %{}
     if data && !Map.get(headers, "content-length") do
       headers = Map.put(headers, "content-length", byte_size(data))
@@ -103,14 +111,14 @@ defmodule MuWeb.Handler do
     {302, "Found"},
     {303, "See Other"},                        # since HTTP/1.1
     {304, "Not Modified"},
-    #{305, "Use Proxy"},                        # since HTTP/1.1
+   #{305, "Use Proxy"},                        # since HTTP/1.1
     {307, "Temporary Redirect"},               # since HTTP/1.1
     {308, "Permanent Redirect"},               # approved as experimental RFC
 
     # 4xx Client Error
     {400, "Bad request"},
-    #{401, "Unauthorized"},
-    #{402, "Payment Required"},
+   #{401, "Unauthorized"},
+   #{402, "Payment Required"},
     {403, "Forbidden"},
     {404, "Not Found"},
     {405, "Method Not Allowed"},

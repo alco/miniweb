@@ -292,19 +292,26 @@ defmodule MuWeb.Router.Mixin do
         func = {:&, meta, [{:/, meta, [arg, 3]}]}
         quote do: unquote(func).(path, unquote(opts), var!(conn, nil))
 
+      {:wrap, [{fun, _, _}, arguments]} ->
+        wrap_fun(fun, arguments, [])
+
       {:wrap, [{fun, _, _}, arguments, opts]} ->
-        funcall = {fun, [], arguments}
-        quote do
-          use MuWeb.Handler
-          val = unquote(funcall)
-          reply(unquote(opts[:status] || 200), to_string(val))
-        end
+        wrap_fun(fun, arguments, opts)
 
       {:code, code} ->
         quote do
           use MuWeb.Handler
           unquote(code)
         end
+    end
+  end
+
+  defp wrap_fun(fun, args, opts) do
+    funcall = {fun, [], args}
+    quote do
+      use MuWeb.Handler
+      val = unquote(funcall)
+      reply(unquote(opts[:status] || 200), to_string(val))
     end
   end
 end

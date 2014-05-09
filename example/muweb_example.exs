@@ -25,16 +25,13 @@ defmodule APIRouter do
     reply(201)
   end
 
-  handle "/random", :get,
-    wrap(Util.random,
-         [query("min", 0), query("max", 100)],
-         status: 200)
+  handle "/random", :get, wrap(Util.random, [])
 
-  #handle "/random_int", :get do
-    #min = query("min", 0)
-    #max = query("max", 0)
-    #reply(200, Util.random(min, max))
-  #end
+  handle "/random_int", :get do
+    min = query("min", "0") |> binary_to_integer
+    max = query("max", "1000000") |> binary_to_integer
+    reply(200, Util.random(min, max) |> to_string)
+  end
 
   handle _, _ do
     reply(403)
@@ -43,9 +40,15 @@ end
 
 
 defmodule Util do
-  def random(_min, _max) do
+  def random() do
     :random.uniform()
   end
+
+  def random(min, max) when max >= min do
+    :random.uniform(1 + max - min) + min - 1
+  end
+
+  def random(_, _), do: :bad_range
 end
 
 
