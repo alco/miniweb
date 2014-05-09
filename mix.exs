@@ -1,8 +1,8 @@
-defmodule Uweb.Mixfile do
+defmodule MuWeb.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :uweb,
+    [app: :muweb,
      version: "0.0.1",
      elixir: "~> 0.13.1",
      deps: deps]
@@ -13,7 +13,7 @@ defmodule Uweb.Mixfile do
   # Type `mix help compile.app` for more information
   def application do
     [ applications: [],
-      mod: {MicroWeb, []} ]
+      mod: {MuWeb, []} ]
   end
 
   # List all dependencies in the format:

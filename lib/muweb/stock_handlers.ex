@@ -1,5 +1,5 @@
-defmodule MicroWeb.StockHandlers do
-  use MicroWeb.Handler
+defmodule MuWeb.StockHandlers do
+  use MuWeb.Handler
 
   def static_handler(path, opts, conn) do
     # Check if it's a head request

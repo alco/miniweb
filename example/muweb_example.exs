@@ -1,7 +1,7 @@
 defmodule Router do
-  use MicroWeb.Router
+  use MuWeb.Router
 
-  import MicroWeb.StockHandlers
+  import MuWeb.StockHandlers
 
   params [:root_dir]
 
@@ -19,7 +19,7 @@ end
 
 
 defmodule APIRouter do
-  use MicroWeb.Router
+  use MuWeb.Router
 
   handle "/", :post do
     reply(201)
@@ -50,4 +50,4 @@ end
 
 
 router = Router.init(root_dir: "example/priv/static")
-MicroWeb.Server.start(router: router)
+MuWeb.Server.start(router: router)

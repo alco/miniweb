@@ -1,4 +1,4 @@
-defmodule MicroWeb.Supervisor do
+defmodule MuWeb.Supervisor do
   @moduledoc false
 
   use Supervisor.Behaviour

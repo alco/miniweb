@@ -1,14 +1,14 @@
-defmodule MicroWeb.Router do
+defmodule MuWeb.Router do
   @moduledoc """
   Router definition that provides the routing DSL for user modules.
 
-  See the docs for `MicroWeb.Router.Mixin` for a detailed overview of the
+  See the docs for `MuWeb.Router.Mixin` for a detailed overview of the
   provided functions.
 
   ## Example
 
       defmodule MyRouter do
-        use MicroWeb.Router
+        use MuWeb.Router
 
         # serve the current working directory
         handle _, :get, &static_handler
@@ -21,16 +21,16 @@ defmodule MicroWeb.Router do
     quote do
       @before_compile unquote(__MODULE__)
 
-      import MicroWeb.Router.Mixin
-      import MicroWeb.StockHandlers
+      import MuWeb.Router.Mixin
+      import MuWeb.StockHandlers
 
-      #Module.register_attribute(__MODULE__, :micro_web_router_params, accumulate: true)
+      #Module.register_attribute(__MODULE__, :mu_web_router_params, accumulate: true)
     end
   end
 
   @doc false
   defmacro __before_compile__(_env) do
-    #IO.inspect List.flatten(Module.get_attribute(env.module, :micro_web_router_params))
+    #IO.inspect List.flatten(Module.get_attribute(env.module, :mu_web_router_params))
     quote do
       def init(opts) do
         {__MODULE__, opts}
@@ -40,14 +40,14 @@ defmodule MicroWeb.Router do
 end
 
 
-defmodule MicroWeb.Router.Mixin do
+defmodule MuWeb.Router.Mixin do
   @moduledoc """
-  MicroWeb.Router.Mixin implements the routing DSL.
+  MuWeb.Router.Mixin implements the routing DSL.
 
   You generally include use it as follows:
 
       defmodule MyRouter do
-        use MicroWeb.Router
+        use MuWeb.Router
 
         handle _, :get, &static_handler
       end
@@ -81,7 +81,7 @@ defmodule MicroWeb.Router.Mixin do
   """
   defmacro params(list) when is_list(list) do
     # FIXME: implement checking of available parameters
-    #quote do: (@micro_web_router_params unquote(list))
+    #quote do: (@mu_web_router_params unquote(list))
   end
 
   @doc """
@@ -91,7 +91,7 @@ defmodule MicroWeb.Router.Mixin do
   ## Example
 
       defmodule MyRouter do
-        use MicroWeb.Router
+        use MuWeb.Router
 
         params [:root_dir]
 
@@ -120,7 +120,7 @@ defmodule MicroWeb.Router.Mixin do
   ## Example
 
       defmodule APIRouter do
-        use MicroWeb.Router
+        use MuWeb.Router
 
         handle "/hello", :get do
           reply(200, "hi")
@@ -129,7 +129,7 @@ defmodule MicroWeb.Router.Mixin do
 
 
       defmodule MyRouter do
-        use MicroWeb.Router
+        use MuWeb.Router
 
         mount "/api", APIRouter
       end
@@ -182,7 +182,7 @@ defmodule MicroWeb.Router.Mixin do
   ## Example
 
       defmodule MyRouter do
-        use MicroWeb.Router
+        use MuWeb.Router
 
         handle "/", [:get, :head], &static_handler, file: "index.html"
         handle "/secret", :post, wrap(Utill.store_secret, [])
@@ -248,7 +248,7 @@ defmodule MicroWeb.Router.Mixin do
 
   defp path_components(path) do
     String.split(path, "/")
-    |> MicroWeb.Util.strip_list()
+    |> MuWeb.Util.strip_list()
   end
 
 
@@ -295,14 +295,14 @@ defmodule MicroWeb.Router.Mixin do
       {:wrap, [{fun, _, _}, arguments, opts]} ->
         funcall = {fun, [], arguments}
         quote do
-          use MicroWeb.Handler
+          use MuWeb.Handler
           val = unquote(funcall)
           reply(unquote(opts[:status] || 200), to_string(val))
         end
 
       {:code, code} ->
         quote do
-          use MicroWeb.Handler
+          use MuWeb.Handler
           unquote(code)
         end
     end

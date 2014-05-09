@@ -10,7 +10,7 @@ defmodule HttpReq do
   ]
 end
 
-defmodule MicroWeb.Server do
+defmodule MuWeb.Server do
   @moduledoc """
   An http server that allows users to set up handlers to process data coming
   from the clients.
@@ -182,6 +182,9 @@ defmodule MicroWeb.Server do
   defp format_version({major, minor}), do: "#{major}.#{minor}"
 
 
+  #defp format_resp(%HttpResp{}=resp) do
+
+
   defp handle_req({:fun, handler}, req, sock), do:
     handler.(req, sock)
 
@@ -222,7 +225,7 @@ defmodule MicroWeb.Server do
   defp split_path(path) when is_binary(path) do
     #IO.puts "INCOMING PATH: #{inspect path}"
     String.split(path, "/")
-    |> MicroWeb.Util.strip_list()
+    |> MuWeb.Util.strip_list()
     #|> IO.inspect
   end
 

@@ -1,4 +1,4 @@
-defmodule MicroWeb.Handler do
+defmodule MuWeb.Handler do
   @proto_version "1.1"
 
   defmacro __using__(_) do
@@ -69,7 +69,7 @@ defmodule MicroWeb.Handler do
 
   defp reply_http(conn, status, headers, data) do
     import Kernel, except: [send: 2]
-    import MicroWeb.Server, only: [send: 2]
+    import MuWeb.Server, only: [send: 2]
 
     status_string = "HTTP/#{@proto_version} #{symbolic_status(status)}"
 

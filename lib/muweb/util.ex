@@ -1,4 +1,4 @@
-defmodule MicroWeb.Util do
+defmodule MuWeb.Util do
   @moduledoc false
 
   def strip_list([]), do: []

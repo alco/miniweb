@@ -1,9 +1,12 @@
-defmodule Mix.Tasks.Uweb do
+defmodule Mix.Tasks.Muweb do
+  @shortdoc "Run μWeb commands"
+
   @moduledoc """
-  Single task encapsulating a set of useful commands.
+  Single task encapsulating a set of useful commands
+  that utilise the μWeb server.
 
   Synopsis:
-    mix uweb COMMAND [ARG...]
+    mix muweb COMMAND [ARG...]
 
   Commands:
     help       Show help about given command
@@ -55,28 +58,28 @@ defmodule Mix.Tasks.Uweb do
   defp usage("help") do
     Mix.shell.info """
     Synopsis:
-      mix uweb help [COMMAND]
+      mix muweb help [COMMAND]
     """
   end
 
   defp usage("inspect") do
     Mix.shell.info """
     Synopsis:
-      mix uweb inspect
+      mix muweb inspect
     """
   end
 
   defp usage("proxy") do
     Mix.shell.info """
     Synopsis:
-      mix uweb proxy
+      mix muweb proxy
     """
   end
 
   defp usage("serve") do
     Mix.shell.info """
     Synopsis:
-      mix uweb serve [-d] [PATH]
+      mix muweb serve [-d] [PATH]
 
     Arguments:
       PATH    the directory to serve
@@ -93,12 +96,12 @@ defmodule Mix.Tasks.Uweb do
 
   defmodule ServeRouter do
     @moduledoc false
-    use MicroWeb.Router
-    handle _, [:get, :head], &MicroWeb.StockHandlers.static_handler, root: param(:root_dir)
+    use MuWeb.Router
+    handle _, [:get, :head], &MuWeb.StockHandlers.static_handler, root: param(:root_dir)
   end
 
   defp serve(path) do
     router = ServeRouter.init(root_dir: path)
-    MicroWeb.Server.start(router: router)
+    MuWeb.Server.start(router: router)
   end
 end
