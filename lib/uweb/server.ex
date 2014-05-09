@@ -1,5 +1,13 @@
 defmodule HttpReq do
-  defstruct [:method, :path, :query, :headers, :proto, :version, :body]
+  defstruct [
+    method: nil,
+    path: "",
+    query: "",
+    headers: [],
+    proto: nil,
+    version: nil,
+    body: "",
+  ]
 end
 
 defmodule MicroWeb.Server do
@@ -92,7 +100,7 @@ defmodule MicroWeb.Server do
         :inet.setopts(sock, [:binary, {:packet, :httph_bin}, {:active, :once}])
         log "#{inspect pid}: got initial request #{method} #{inspect uri}"
         {path, query} = split_uri(uri)
-        updated_req = %HttpReq{req | method: normalize_method(method),
+        updated_req = %HttpReq{req | method: method,
                                        path: path,
                                       query: query,
                                     version: version}
@@ -100,7 +108,7 @@ defmodule MicroWeb.Server do
 
       {:http, ^sock, {:http_header, _, field, _reserved, value}} ->
         log "#{inspect pid}: got header #{field}: #{value}"
-        updated_req = Map.update(req, :headers, [], &[{to_string(field), value}|&1])
+        updated_req = Map.update!(req, :headers, &[{to_string(field), value}|&1])
         client_loop(sock, req_handler, updated_req)
 
       {:http, ^sock, :http_eoh} ->
@@ -109,6 +117,8 @@ defmodule MicroWeb.Server do
         if req_handler do
           log "#{inspect pid}: processing request #{req.method} #{req.path}"
           updated_req = %HttpReq{req | body: data}
+          format_req(updated_req)
+          updated_req = %HttpReq{req | method: normalize_method(req.method)}
           case handle_req(req_handler, updated_req, sock) do
             {:reply, data} ->
               length = byte_size(data)
@@ -122,6 +132,10 @@ defmodule MicroWeb.Server do
           :gen_tcp.send(sock, "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok")
           client_close(sock)
         end
+
+      {:http, ^sock, {:http_error, error_line}} ->
+        log "#{inspect pid}: HTTP error on line: #{error_line}"
+        client_close(sock)
 
       {:tcp_closed, ^sock} ->
         client_close(sock)
@@ -149,6 +163,23 @@ defmodule MicroWeb.Server do
       {:error, reason} -> raise RuntimeError, 'Could not read request data: #{inspect reason}'
     end
   end
+
+
+  defp format_req(%HttpReq{}=req) do
+    query = if (q = req.query; byte_size(q) > 0) do
+      "?" <> q
+    else
+      ""
+    end
+    IO.puts "#{req.method} #{req.path}#{query} HTTP/#{format_version(req.version)}"
+    Enum.each(req.headers, fn {key, val} ->
+      IO.puts "#{key}: #{val}"
+    end)
+    IO.puts ""
+    IO.puts req.body
+  end
+
+  defp format_version({major, minor}), do: "#{major}.#{minor}"
 
 
   defp handle_req({:fun, handler}, req, sock), do:
