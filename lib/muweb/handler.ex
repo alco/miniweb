@@ -43,7 +43,7 @@ defmodule MuWeb.Handler do
     quote do: var!(_req, nil)
   end
 
-  def reply(status, data, opts, conn) when is_binary(data) do
+  def reply(status, data, opts, conn) do
     headers = opts[:headers] || %{}
     if data && !Map.get(headers, "content-length") do
       headers = Map.put(headers, "content-length", byte_size(data))
@@ -116,7 +116,7 @@ defmodule MuWeb.Handler do
     {308, "Permanent Redirect"},               # approved as experimental RFC
 
     # 4xx Client Error
-    {400, "Bad request"},
+    {400, "Bad Request"},
    #{401, "Unauthorized"},
    #{402, "Payment Required"},
     {403, "Forbidden"},
@@ -134,7 +134,7 @@ defmodule MuWeb.Handler do
    #{415, "Unsupported Media Type"},
    #{416, "Requested Range Not Satisfiable"},
    #{417, "Expectation Failed"},
-   #{418, "I'm a teapot"},                     # RFC 2324
+   {418, "I'm a teapot"},                     # RFC 2324
    #{419, "Authentication Timeout"},           # not in RFC 2616
    #{426, "Upgrade Required"},                 # RFC 2817
    #{428, "Precondition Required"},            # RFC 6585
