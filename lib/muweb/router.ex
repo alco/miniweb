@@ -102,7 +102,7 @@ defmodule MuWeb.Router.Mixin do
 
   """
   defmacro param(name) when is_atom(name) do
-    quote do: var!(_init_opts, nil)[unquote(name)]
+    quote do: var!(_init_opts)[unquote(name)]
   end
 
 
@@ -231,9 +231,9 @@ defmodule MuWeb.Router.Mixin do
     quoted_body = quote_handler(handler, opts)
 
     quoted_head = if match?({:_, _, nil}, method) do
-      quote do: handle(_, unquote(matchspec), var!(_req, nil), var!(_init_opts, nil), var!(conn, nil))
+      quote do: handle(_, unquote(matchspec), var!(_req), var!(_init_opts), var!(conn))
     else
-      quote do: handle(method, unquote(matchspec), var!(_req, nil), var!(_init_opts, nil), var!(conn, nil)) when method in unquote(methods)
+      quote do: handle(method, unquote(matchspec), var!(_req), var!(_init_opts), var!(conn)) when method in unquote(methods)
     end
 
     q = quote do
@@ -290,7 +290,7 @@ defmodule MuWeb.Router.Mixin do
     case handler do
       {:func, {:&, meta, [arg]}} ->
         func = {:&, meta, [{:/, meta, [arg, 3]}]}
-        quote do: unquote(func).(path, unquote(opts), var!(conn, nil))
+        quote do: unquote(func).(path, unquote(opts), var!(conn))
 
       {:wrap, [{fun, _, _}, arguments]} ->
         wrap_fun(fun, arguments, [])

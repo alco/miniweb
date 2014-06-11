@@ -11,36 +11,36 @@ defmodule MuWeb.Handler do
 
   defmacro reply(status) do
     quote do
-      unquote(__MODULE__).reply(unquote(status), nil, [], var!(conn, nil))
+      unquote(__MODULE__).reply(unquote(status), nil, [], var!(conn))
     end
   end
 
   defmacro reply(status, data) do
     quote do
-      unquote(__MODULE__).reply(unquote(status), unquote(data), [], var!(conn, nil))
+      unquote(__MODULE__).reply(unquote(status), unquote(data), [], var!(conn))
     end
   end
 
   defmacro reply(status, data, opts) do
     quote do
-      unquote(__MODULE__).reply(unquote(status), unquote(data), unquote(opts), var!(conn, nil))
+      unquote(__MODULE__).reply(unquote(status), unquote(data), unquote(opts), var!(conn))
     end
   end
 
   defmacro reply_file(status, path, opts \\ []) do
     quote do
-      unquote(__MODULE__).reply_file(unquote(status), unquote(path), unquote(opts), var!(conn, nil))
+      unquote(__MODULE__).reply_file(unquote(status), unquote(path), unquote(opts), var!(conn))
     end
   end
 
   defmacro query(key, default \\ nil) do
     quote do
-      Map.get(URI.decode_query(var!(_req, nil).query), unquote(key), unquote(default))
+      Map.get(URI.decode_query(var!(_req).query), unquote(key), unquote(default))
     end
   end
 
   defmacro req() do
-    quote do: var!(_req, nil)
+    quote do: var!(_req)
   end
 
   def reply(status, data, opts, conn) do
