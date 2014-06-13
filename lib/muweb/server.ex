@@ -21,9 +21,6 @@ defmodule MuWeb.Server do
     IO.puts "[uweb] " <> msg
   end
 
-  @port 9000
-
-
   @doc """
   Starts the server. Available options:
 
@@ -34,7 +31,7 @@ defmodule MuWeb.Server do
 
   """
   def start(options \\ []) do
-    port = Keyword.get(options, :port, @port)
+    port = Keyword.get(options, :port, 9000)
     case :gen_tcp.listen(port, [{:packet, :http_bin}, {:active, false}, {:reuseaddr, true}]) do
       {:ok, sock} ->
         log "Listening on port #{port}..."

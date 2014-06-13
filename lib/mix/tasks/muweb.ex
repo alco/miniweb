@@ -4,7 +4,7 @@ options = [
   [name: [:host, :h], argname: "hostname",
    help: "Hostname to listen on."],
 
-  [name: [:port, :p],
+  [name: [:port, :p], argtype: :integer, default: 9000,
    help: "Port number to listen on."],
 ]
 
@@ -129,9 +129,9 @@ defmodule Mix.Tasks.Muweb do
   end
 
 
-  def run_cmd("serve", %Commando.Cmd{arguments: %{"path" => dir}}, _options) do
+  def run_cmd("serve", %Commando.Cmd{arguments: %{"path" => dir}}, options) do
     IO.puts "Serving directory: #{dir}"
-    serve(dir)
+    serve(dir, options[:port])
   end
 
   #def run_cmd("serve", [path]) do
@@ -218,11 +218,12 @@ defmodule Mix.Tasks.Muweb do
   defmodule ServeRouter do
     @moduledoc false
     use MuWeb.Router
+    params [:root_dir]
     handle _, [:get, :head], &MuWeb.StockHandlers.static_handler, root: param(:root_dir)
   end
 
-  defp serve(path) do
+  defp serve(path, port) do
     router = ServeRouter.init(root_dir: path)
-    MuWeb.Server.start(router: router)
+    MuWeb.Server.start(router: router, port: port)
   end
 end
