@@ -11,56 +11,65 @@ defmodule MuWeb.Handler do
 
   defmacro reply(status) do
     quote do
-      unquote(__MODULE__).reply(unquote(status), nil, [], var!(conn))
+      unquote(__MODULE__).reply(unquote(status), nil, [], var!(conn), var!(req))
     end
   end
 
   defmacro reply(status, data) do
     quote do
-      unquote(__MODULE__).reply(unquote(status), unquote(data), [], var!(conn))
+      unquote(__MODULE__).reply(unquote(status), unquote(data), [], var!(conn), var!(req))
     end
   end
 
   defmacro reply(status, data, opts) do
     quote do
-      unquote(__MODULE__).reply(unquote(status), unquote(data), unquote(opts), var!(conn))
+      unquote(__MODULE__).reply(unquote(status), unquote(data), unquote(opts), var!(conn), var!(req))
     end
   end
 
   defmacro reply_file(status, path, opts \\ []) do
     quote do
-      unquote(__MODULE__).reply_file(unquote(status), unquote(path), unquote(opts), var!(conn))
+      unquote(__MODULE__).reply_file(unquote(status), unquote(path), unquote(opts), var!(conn), var!(req))
     end
   end
 
   defmacro query(key, default \\ nil) do
     quote do
-      Map.get(URI.decode_query(var!(_req).query), unquote(key), unquote(default))
+      Map.get(URI.decode_query(var!(req).query), unquote(key), unquote(default))
     end
   end
 
   defmacro req() do
-    quote do: var!(_req)
+    quote do: var!(req)
   end
 
-  def reply(status, data, opts, conn) do
+  def reply(status, data, opts, conn, req) do
     headers = opts[:headers] || %{}
     if data && !Map.get(headers, "content-length") do
       headers = Map.put(headers, "content-length", byte_size(data))
     end
+    if req().method == :head do
+      data = nil
+    end
     reply_http(conn, status, headers, data)
   end
 
-  def reply_file(status, path, opts, conn) do
+  def reply_file(status, path, opts, conn, req) do
     headers = opts[:headers] || %{}
-    {status, data} = case File.read(path) do
-      {:error, :enoent} ->
-        {404, nil}
-      {:ok, data} ->
+    {status, data} = case File.stat(path) do
+      {:ok, %File.Stat{type: :directory}} ->
+        {404, "Not Found"}
+      {:ok, %File.Stat{size: size}} ->
+        if req().method != :head do
+          data = File.read!(path)
+        end
         if !Map.get(headers, "content-length") do
-          headers = Map.put(headers, "content-length", byte_size(data))
+          headers = Map.put(headers, "content-length", size)
         end
         {status, data}
+    end
+    if req().method == :head do
+      data = nil
     end
     reply_http(conn, status, headers, data)
   end

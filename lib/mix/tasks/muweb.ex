@@ -37,7 +37,7 @@ commands = [
    help: "Serve files from the specified directory, recursively.",
    arguments: [[name: "path", default: "."]],
    options: [
-     [name: [:list, :l],
+     [name: [:list, :l], argtype: :boolean,
       help: """
         For directory requests, serve HTML with the list of files in that directory.
 
@@ -87,9 +87,9 @@ defmodule Mix.Tasks.Muweb do
     IO.puts "proxying..."
   end
 
-  def run_cmd("serve", %Commando.Cmd{arguments: %{"path" => dir}}, options) do
+  def run_cmd("serve", %Commando.Cmd{options: opts, arguments: %{"path" => dir}}, options) do
     IO.puts "Serving directory: #{dir}"
-    serve(dir, options[:port])
+    serve(dir, options[:port], opts[:list])
   end
 
   ###
@@ -97,12 +97,13 @@ defmodule Mix.Tasks.Muweb do
   defmodule ServeRouter do
     @moduledoc false
     use MuWeb.Router
-    params [:root_dir]
-    handle _, [:get, :head], &MuWeb.StockHandlers.static_handler, root: param(:root_dir)
+    params [:root_dir, :listdir]
+    handle _, [:get, :head], &MuWeb.StockHandlers.static_handler,
+        root: param(:root_dir), listdir: param(:listdir)
   end
 
-  defp serve(path, port) do
-    router = ServeRouter.init(root_dir: path)
+  defp serve(path, port, listdir) do
+    router = ServeRouter.init(root_dir: path, listdir: listdir)
     MuWeb.Server.start(router: router, port: port)
   end
 end

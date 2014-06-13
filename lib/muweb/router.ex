@@ -231,9 +231,9 @@ defmodule MuWeb.Router.Mixin do
     quoted_body = quote_handler(handler, opts)
 
     quoted_head = if match?({:_, _, nil}, method) do
-      quote do: handle(_, unquote(matchspec), var!(_req), var!(_init_opts), var!(conn))
+      quote do: handle(_, unquote(matchspec), var!(req), var!(_init_opts), var!(conn))
     else
-      quote do: handle(method, unquote(matchspec), var!(_req), var!(_init_opts), var!(conn)) when method in unquote(methods)
+      quote do: handle(method, unquote(matchspec), var!(req), var!(_init_opts), var!(conn)) when method in unquote(methods)
     end
 
     q = quote do
@@ -289,8 +289,8 @@ defmodule MuWeb.Router.Mixin do
   defp quote_handler(handler, opts) do
     case handler do
       {:func, {:&, meta, [arg]}} ->
-        func = {:&, meta, [{:/, meta, [arg, 3]}]}
-        quote do: unquote(func).(path, unquote(opts), var!(conn))
+        func = {:&, meta, [{:/, meta, [arg, 4]}]}
+        quote do: unquote(func).(path, unquote(opts), var!(conn), var!(req))
 
       {:wrap, [{fun, _, _}, arguments]} ->
         wrap_fun(fun, arguments, [])
