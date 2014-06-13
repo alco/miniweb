@@ -22,6 +22,6 @@ defmodule MuWeb.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    []
+    [{:commando, github: "alco/commando"}]
   end
 end
