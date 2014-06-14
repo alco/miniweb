@@ -65,7 +65,7 @@ defmodule MuWeb.CLI do
     help: @help, options: options, commands: commands,
   ]
 
-  def run(args), do: Commando.parse(args, @cmdspec)
+  def main(args), do: Commando.parse(args, @cmdspec)
 
   def cmd_inspect(%Cmd{options: cmd_opts}, %Cmd{options: opts}) do
     MuWeb.CLI.Inspect.run(opts[:port], cmd_opts[:reply_file])

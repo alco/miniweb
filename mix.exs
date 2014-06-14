@@ -5,7 +5,9 @@ defmodule MuWeb.Mixfile do
     [app: :muweb,
      version: "0.0.1",
      elixir: "~> 0.13.1",
-     deps: deps]
+     deps: deps,
+
+     escript_main_module: MuWeb.CLI]
   end
 
   # Configuration for the OTP application

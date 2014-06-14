@@ -10,5 +10,5 @@ defmodule Mix.Tasks.Muweb do
       mix muweb help
   """
 
-  def run(args), do: MuWeb.CLI.run(args)
+  def run(args), do: MuWeb.CLI.main(args)
 end
