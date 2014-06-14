@@ -33,6 +33,12 @@ defmodule MuWeb.Handler do
     end
   end
 
+  defmacro abort() do
+    quote do
+      unquote(__MODULE__).close_connection(var!(conn))
+    end
+  end
+
   defmacro query(key, default \\ nil) do
     quote do
       Map.get(URI.decode_query(var!(req).query), unquote(key), unquote(default))
@@ -41,6 +47,10 @@ defmodule MuWeb.Handler do
 
   defmacro req() do
     quote do: var!(req)
+  end
+
+  def close_connection(_conn) do
+    :noreply
   end
 
   def reply(status, data, opts, conn, req) do

@@ -1,9 +1,12 @@
 defmodule MuWeb.StockHandlers do
   use MuWeb.Handler
 
+  def inspect_handler(_path, _opts, conn, req) do
+    IO.puts MuWeb.Server.format_req(req)
+    abort()
+  end
+
   def static_handler(path, opts, conn, req) do
-    # Check if it's a head request
-    # Fixme deal with directories
     cond do
       filepath=opts[:file] ->
         reply_file(200, filepath)

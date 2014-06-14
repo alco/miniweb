@@ -78,9 +78,8 @@ defmodule Mix.Tasks.Muweb do
     run_cmd(cmd.name, cmd, opts)
   end
 
-  def run_cmd("inspect", _cmd, _options) do
-    IO.puts "inspecting..."
-    #_ -> nil #usage("inspect")
+  def run_cmd("inspect", _cmd, options) do
+    muweb_inspect(options[:port])
   end
 
   def run_cmd("proxy", _cmd, _options) do
@@ -88,22 +87,42 @@ defmodule Mix.Tasks.Muweb do
   end
 
   def run_cmd("serve", %Commando.Cmd{options: opts, arguments: %{"path" => dir}}, options) do
-    IO.puts "Serving directory: #{dir}"
-    serve(dir, options[:port], opts[:list])
+    case dir do
+      "." -> IO.puts "Serving current directory"
+      _   -> IO.puts "Serving directory: #{dir}"
+    end
+    muweb_serve(dir, options[:port], opts[:list])
   end
 
   ###
 
+  alias MuWeb.Router
+  alias MuWeb.Server
+  import MuWeb.StockHandlers
+
   defmodule ServeRouter do
     @moduledoc false
-    use MuWeb.Router
+    use Router
     params [:root_dir, :listdir]
-    handle _, [:get, :head], &MuWeb.StockHandlers.static_handler,
-        root: param(:root_dir), listdir: param(:listdir)
+    handle _, [:get, :head], &static_handler,
+                                root: param(:root_dir), listdir: param(:listdir)
   end
 
-  defp serve(path, port, listdir) do
+  defp muweb_serve(path, port, listdir) do
     router = ServeRouter.init(root_dir: path, listdir: listdir)
-    MuWeb.Server.start(router: router, port: port)
+    Server.start(router: router, port: port)
+  end
+
+  ###
+
+  defmodule InspectRouter do
+    @moduledoc false
+    use Router
+    handle _, _, &MuWeb.StockHandlers.inspect_handler
+  end
+
+  defp muweb_inspect(port) do
+    router = InspectRouter.init([])
+    Server.start(router: router, port: port)
   end
 end

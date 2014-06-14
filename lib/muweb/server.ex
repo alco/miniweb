@@ -17,9 +17,8 @@ defmodule MuWeb.Server do
   """
 
 
-  defp log(msg) do
-    IO.puts "[uweb] " <> msg
-  end
+  #defp log(msg), do: IO.puts "[uweb] " <> msg
+  defp log(_), do: nil
 
   @doc """
   Starts the server. Available options:
@@ -114,9 +113,7 @@ defmodule MuWeb.Server do
         data = read_request_data(sock, req.headers)
         if req_handler do
           log "#{inspect pid}: processing request #{req.method} #{req.path}"
-          updated_req = %HttpReq{req | body: data}
-          format_req(updated_req)
-          updated_req = %HttpReq{req | method: normalize_method(req.method)}
+          updated_req = %HttpReq{req | body: data, method: normalize_method(req.method)}
           case handle_req(req_handler, updated_req, sock) do
             {:reply, data} ->
               length = byte_size(data)
@@ -165,18 +162,23 @@ defmodule MuWeb.Server do
   end
 
 
-  defp format_req(%HttpReq{}=req) do
+  def format_req(%HttpReq{}=req) do
     query = if (q = req.query; byte_size(q) > 0) do
       "?" <> q
     else
       ""
     end
-    IO.puts "#{req.method} #{req.path}#{query} HTTP/#{format_version(req.version)}"
-    Enum.each(req.headers, fn {key, val} ->
-      IO.puts "#{key}: #{val}"
-    end)
-    IO.puts ""
-    IO.puts req.body
+    method = req.method |> Atom.to_string |> String.upcase
+    header_str =
+      req.headers
+      |> Enum.map(fn {key, val} -> "#{key}: #{val}" end)
+      |> Enum.join("\n")
+
+    """
+    #{method} #{req.path}#{query} HTTP/#{format_version(req.version)}
+    #{header_str}
+    #{req.body}
+    """
   end
 
   defp format_version({major, minor}), do: "#{major}.#{minor}"
