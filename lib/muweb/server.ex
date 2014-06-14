@@ -17,8 +17,8 @@ defmodule MuWeb.Server do
   """
 
 
-  #defp log(msg), do: IO.puts "[uweb] " <> msg
-  defp log(_), do: nil
+  defp log(msg), do: IO.puts "[uweb] " <> msg
+  #defp log(_), do: nil
 
   @doc """
   Starts the server. Available options:
@@ -55,15 +55,16 @@ defmodule MuWeb.Server do
   end
 
   # Spawn a new process to handle communication over the socket.
-  defp spawn_client(sock, options) do
+  def spawn_client(sock, options) do
     if handler = options[:handler], do: req_handler = {:fun, handler}
     if router = options[:router], do: req_handler = {:module, router}
+    state = options[:state]
 
-    pid = spawn(fn -> client_start(sock, req_handler) end)
+    pid = spawn(fn -> client_start(sock, req_handler, state) end)
     :ok = :gen_tcp.controlling_process(sock, pid)
   end
 
-  defp client_start(sock, req_handler) do
+  defp client_start(sock, req_handler, state) do
     pid = self()
 
     # Get info about the client
@@ -77,21 +78,24 @@ defmodule MuWeb.Server do
 
     :random.seed(:erlang.now())
 
-    client_loop(sock, req_handler, %HttpReq{})
+    client_loop(sock, req_handler, %HttpReq{}, state)
   end
 
   # The receive loop which waits for a packet from the client, then invokes the
   # handler function and sends its return value back to the client.
-  def client_loop(
-    sock,
-    req_handler,
-    req
-  ) do
+  defp client_loop(sock, req_handler, req, state) do
     pid = self()
 
     :inet.setopts(sock, active: :once)
 
     receive do
+      # client part
+      {:http, ^sock, {:http_response, version, status, status_str}} ->
+        log "#{inspect pid}: got initial response #{status} #{status_str} HTTP/#{format_version(version)}"
+        updated_req = %HttpReq{req | version: version}
+        client_loop(sock, req_handler, updated_req, state)
+
+      # server part
       {:http, ^sock, {:http_request, method, uri, version}} ->
         :inet.setopts(sock, [:binary, {:packet, :httph_bin}, {:active, :once}])
         log "#{inspect pid}: got initial request #{method} #{inspect uri}"
@@ -100,12 +104,12 @@ defmodule MuWeb.Server do
                                        path: path,
                                       query: query,
                                     version: version}
-        client_loop(sock, req_handler, updated_req)
+        client_loop(sock, req_handler, updated_req, state)
 
       {:http, ^sock, {:http_header, _, field, _reserved, value}} ->
         log "#{inspect pid}: got header #{field}: #{value}"
         updated_req = Map.update!(req, :headers, &[{to_string(field), value}|&1])
-        client_loop(sock, req_handler, updated_req)
+        client_loop(sock, req_handler, updated_req, state)
 
       {:http, ^sock, :http_eoh} ->
         :inet.setopts(sock, [:binary, {:packet, :raw}, {:active, false}])
@@ -114,7 +118,7 @@ defmodule MuWeb.Server do
         if req_handler do
           log "#{inspect pid}: processing request #{req.method} #{req.path}"
           updated_req = %HttpReq{req | body: data, method: normalize_method(req.method)}
-          case handle_req(req_handler, updated_req, sock) do
+          case handle_req(req_handler, updated_req, sock, state) do
             {:reply, data} ->
               length = byte_size(data)
               :gen_tcp.send(sock, "HTTP/1.1 200 OK\r\nContent-Length: #{length}\r\n\r\n#{data}")
@@ -122,6 +126,9 @@ defmodule MuWeb.Server do
 
             :noreply ->
               client_close(sock)
+
+            :noclose ->
+              wait_loop(sock)
           end
         else
           :gen_tcp.send(sock, "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok")
@@ -161,6 +168,12 @@ defmodule MuWeb.Server do
     end
   end
 
+  defp wait_loop(sock) do
+    receive do
+      {:reply, reply} -> :gen_tcp.send(sock, reply)
+    end
+  end
+
 
   def format_req(%HttpReq{}=req) do
     query = if (q = req.query; byte_size(q) > 0) do
@@ -178,7 +191,7 @@ defmodule MuWeb.Server do
     #{method} #{req.path}#{query} HTTP/#{format_version(req.version)}
     #{header_str}
     #{req.body}
-    """
+    """ |> String.replace("\n", "\r\n")
   end
 
   defp format_version({major, minor}), do: "#{major}.#{minor}"
@@ -187,10 +200,10 @@ defmodule MuWeb.Server do
   #defp format_resp(%HttpResp{}=resp) do
 
 
-  defp handle_req({:fun, handler}, req, sock), do:
-    handler.(req, sock)
+  defp handle_req({:fun, handler}, req, sock, state),
+    do: handler.(req, sock, state)
 
-  defp handle_req({:module, {mod, opts}}, %HttpReq{method: method, path: path}=req, sock) do
+  defp handle_req({:module, {mod, opts}}, %HttpReq{method: method, path: path}=req, sock, _) do
     mod.handle(method, split_path(path), req, opts, sock)
   end
 

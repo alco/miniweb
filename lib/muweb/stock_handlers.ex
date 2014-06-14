@@ -1,14 +1,53 @@
 defmodule MuWeb.StockHandlers do
   use MuWeb.Handler
 
+  alias MuWeb.Server
+
   def inspect_handler(_path, opts, conn, req) do
-    IO.puts MuWeb.Server.format_req(req)
+    IO.puts Server.format_req(req)
 
     case opts[:reply] do
       nil -> abort()
       {:data, data} -> reply(200, data)
       path -> reply_file(200, path)
     end
+  end
+
+  def proxy_handler(_path, opts, conn, req) do
+    remote_host = opts[:location]
+    #IO.inspect path
+    #IO.inspect remote_host
+    #abort()
+
+    # TODO:
+    # - send request to remote host
+    # - log reply
+    {address, port} =
+      case String.split(remote_host, ":") do
+        [address, port] -> {address, String.to_integer(port)}
+        [address] -> {address, 80}
+      end
+    {:ok, sock} = :gen_tcp.connect(String.to_char_list(address), port, [{:packet, :http_bin}, {:active, :once}])
+
+    req = Map.update!(req, :headers, fn headers ->
+      Enum.map(headers, fn
+        {"Host", _}=x ->
+          IO.inspect x
+          {"Host", remote_host}
+        other -> other
+      end)
+    end)
+
+    Server.send(sock, Server.format_req(req))
+    Server.spawn_client(sock, handler: &handle_proxy_response/3, state: conn)
+    :noclose
+  end
+
+  defp handle_proxy_response(req, _sock, old_sock) do
+    response = Server.format_req(req)
+    IO.write response
+    :gen_tcp.send(old_sock, response)
+    :noreply
   end
 
   def static_handler(path, opts, conn, req) do
