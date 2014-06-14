@@ -67,8 +67,9 @@ defmodule MuWeb.Handler do
   def reply_file(status, path, opts, conn, req) do
     headers = opts[:headers] || %{}
     {status, data} = case File.stat(path) do
-      {:ok, %File.Stat{type: :directory}} ->
-        {404, "Not Found"}
+      {:error, :enoent} -> {404, "Not Found"}
+      {:ok, %File.Stat{type: :directory}} -> {404, "Not Found"}
+
       {:ok, %File.Stat{size: size}} ->
         if req().method != :head do
           data = File.read!(path)

@@ -71,22 +71,22 @@ defmodule Mix.Tasks.Muweb do
   ]
 
   use Mix.Task
+  alias Commando.Cmd
 
   def run(args) do
-    {:ok, %Commando.Cmd{options: opts, subcmd: cmd}} =
-      Commando.parse(args, @cmdspec)
+    {:ok, %Cmd{options: opts, subcmd: cmd}} = Commando.parse(args, @cmdspec)
     run_cmd(cmd.name, cmd, opts)
   end
 
-  def run_cmd("inspect", _cmd, options) do
-    muweb_inspect(options[:port])
+  def run_cmd("inspect", %Cmd{options: opts}, options) do
+    muweb_inspect(options[:port], opts[:reply_file])
   end
 
   def run_cmd("proxy", _cmd, _options) do
     IO.puts "proxying..."
   end
 
-  def run_cmd("serve", %Commando.Cmd{options: opts, arguments: %{"path" => dir}}, options) do
+  def run_cmd("serve", %Cmd{options: opts, arguments: %{"path" => dir}}, options) do
     case dir do
       "." -> IO.puts "Serving current directory"
       _   -> IO.puts "Serving directory: #{dir}"
@@ -118,11 +118,28 @@ defmodule Mix.Tasks.Muweb do
   defmodule InspectRouter do
     @moduledoc false
     use Router
-    handle _, _, &MuWeb.StockHandlers.inspect_handler
+    params [:reply]
+    handle _, _, &inspect_handler, reply: param(:reply)
   end
 
-  defp muweb_inspect(port) do
-    router = InspectRouter.init([])
+  defp muweb_inspect(port, reply_file) do
+    reply = case reply_file do
+      nil -> nil
+      "-" ->
+        IO.puts "Enter the data to be used in responses:"
+        {:data, Enum.into(IO.binstream(:stdio, :line), "")}
+      path ->
+        case File.stat(path) do
+          {:error, :enoent} ->
+            IO.puts "File not found: #{path}"
+            System.halt(1)
+          {:ok, %File.Stat{type: :directory}} ->
+            IO.puts "#{path} is a directory"
+            System.halt(1)
+          {:ok, _} -> path
+        end
+    end
+    router = InspectRouter.init(reply: reply)
     Server.start(router: router, port: port)
   end
 end

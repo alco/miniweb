@@ -1,9 +1,14 @@
 defmodule MuWeb.StockHandlers do
   use MuWeb.Handler
 
-  def inspect_handler(_path, _opts, conn, req) do
+  def inspect_handler(_path, opts, conn, req) do
     IO.puts MuWeb.Server.format_req(req)
-    abort()
+
+    case opts[:reply] do
+      nil -> abort()
+      {:data, data} -> reply(200, data)
+      path -> reply_file(200, path)
+    end
   end
 
   def static_handler(path, opts, conn, req) do
