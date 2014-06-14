@@ -12,6 +12,7 @@ commands = [
   :help,
 
   [name: "inspect",
+   action: &Mix.Tasks.Muweb.cmd_inspect/2,
    help: "Log incoming requests to stdout, optionally sending a reply back.",
    options: [
      [name: [:reply_file, :f], argname: "path",
@@ -26,6 +27,7 @@ commands = [
   ],
 
   [name: "proxy",
+   action: &Mix.Tasks.Muweb.run_cmd/2,
    help: """
      Work as a tunnelling proxy, logging all communications. All traffic
      between client and remote server is transmitted without alterations, but
@@ -34,6 +36,7 @@ commands = [
   ],
 
   [name: "serve",
+   action: &Mix.Tasks.Muweb.cmd_serve/2,
    help: "Serve files from the specified directory, recursively.",
    arguments: [[name: "path", default: "."]],
    options: [
@@ -49,6 +52,16 @@ commands = [
 
 task_help = "Single task encapsulating a set of useful commands that utilise the μWeb server."
 
+spec = Commando.new [
+  prefix: "mix",
+  name: "muweb",
+  version: "μWeb #{Mix.Project.config[:version]}",
+
+  help: task_help,
+  options: options,
+  commands: commands,
+]
+
 defmodule Mix.Tasks.Muweb do
   @shortdoc task_help
   @moduledoc """
@@ -60,15 +73,7 @@ defmodule Mix.Tasks.Muweb do
 
   """
 
-  @cmdspec Commando.new [
-    prefix: "mix",
-    name: "muweb",
-    version: "μWeb #{Mix.Project.config[:version]}",
-
-    help: task_help,
-    options: options,
-    commands: commands,
-  ]
+  @cmdspec spec
 
   use Mix.Task
   alias Commando.Cmd
@@ -78,20 +83,22 @@ defmodule Mix.Tasks.Muweb do
     run_cmd(cmd.name, cmd, opts)
   end
 
-  def run_cmd("inspect", %Cmd{options: opts}, options) do
-    muweb_inspect(options[:port], opts[:reply_file])
-  end
-
   def run_cmd("proxy", _cmd, _options) do
     IO.puts "proxying..."
   end
 
-  def run_cmd("serve", %Cmd{options: opts, arguments: %{"path" => dir}}, options) do
+  def cmd_inspect(%Cmd{options: cmd_opts}, %Cmd{options: opts}) do
+    muweb_inspect(opts[:port], cmd_opts[:reply_file])
+  end
+
+  def cmd_serve(%Cmd{arguments: %{"path" => dir}, options: cmd_opts},
+                %Cmd{options: opts})
+  do
     case dir do
       "." -> IO.puts "Serving current directory"
       _   -> IO.puts "Serving directory: #{dir}"
     end
-    muweb_serve(dir, options[:port], opts[:list])
+    muweb_serve(dir, opts[:port], cmd_opts[:list])
   end
 
   ###
