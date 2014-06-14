@@ -52,16 +52,6 @@ commands = [
 
 task_help = "Single task encapsulating a set of useful commands that utilise the μWeb server."
 
-spec = Commando.new [
-  prefix: "mix",
-  name: "muweb",
-  version: "μWeb #{Mix.Project.config[:version]}",
-
-  help: task_help,
-  options: options,
-  commands: commands,
-]
-
 defmodule Mix.Tasks.Muweb do
   @shortdoc task_help
   @moduledoc """
@@ -73,7 +63,15 @@ defmodule Mix.Tasks.Muweb do
 
   """
 
-  @cmdspec spec
+  @cmdspec Commando.new [
+    prefix: "mix",
+    name: "muweb",
+    version: "μWeb #{Mix.Project.config[:version]}",
+
+    help: task_help,
+    options: options,
+    commands: commands,
+  ]
 
   use Mix.Task
   alias Commando.Cmd
