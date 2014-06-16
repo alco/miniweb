@@ -12,7 +12,6 @@ commands = [
   :help,
 
   [name: "inspect",
-   action: &MuWeb.CLI.cmd_inspect/2,
    help: "Log incoming requests to stdout, optionally sending a reply back.",
    options: [
      [name: [:reply_file, :f], argname: "path",
@@ -27,7 +26,6 @@ commands = [
   ],
 
   [name: "proxy",
-   action: &MuWeb.CLI.cmd_proxy/2,
    arguments: [[name: "url", help: "URL to connect to."]],
    help: """
      Work as a tunnelling proxy, logging all communications. All traffic
@@ -37,7 +35,6 @@ commands = [
   ],
 
   [name: "serve",
-   action: &MuWeb.CLI.cmd_serve/2,
    help: "Serve files from the specified directory, recursively.",
    arguments: [[name: "path", default: "."]],
    options: [
@@ -65,17 +62,23 @@ defmodule MuWeb.CLI do
     help: @help, options: options, commands: commands,
   ]
 
-  def main(args), do: Commando.parse(args, @cmdspec)
+  def main(args), do: Commando.exec(args, @cmdspec, actions: [
+    commands: %{
+      "inspect" => &cmd_inspect/2,
+      "proxy"   => &cmd_proxy/2,
+      "serve"   => &cmd_serve/2,
+    }
+  ])
 
-  def cmd_inspect(%Cmd{options: cmd_opts}, %Cmd{options: opts}) do
+  defp cmd_inspect(%Cmd{options: cmd_opts}, %Cmd{options: opts}) do
     MuWeb.CLI.Inspect.run(opts[:port], cmd_opts[:reply_file])
   end
 
-  def cmd_proxy(%Cmd{arguments: %{"url" => url}}, %Cmd{options: opts}) do
+  defp cmd_proxy(%Cmd{arguments: %{"url" => url}}, %Cmd{options: opts}) do
     MuWeb.CLI.Proxy.run(url, opts[:port])
   end
 
-  def cmd_serve(%Cmd{arguments: %{"path" => dir}, options: cmd_opts},
+  defp cmd_serve(%Cmd{arguments: %{"path" => dir}, options: cmd_opts},
                 %Cmd{options: opts})
   do
     case dir do
