@@ -45,7 +45,13 @@ defmodule MuWeb.CLI.DSL.Command.Serve do
   Serve files from the specified directory, recursively.
   """
 
-  @action MuWeb.CLI.cmd_serve
+  def action(port: port) do
+    case dir do
+      "." -> IO.puts "Serving current directory"
+      _   -> IO.puts "Serving directory: #{dir}"
+    end
+    MuWeb.CLI.Serve.run(path, port, list)
+  end
 
   argument path \\ "."
 
@@ -55,5 +61,4 @@ defmodule MuWeb.CLI.DSL.Command.Serve do
   Without this option, "403 Forbidden" is returned for directory requests.
   """
   option [:list, :l] :: boolean
-
 end
