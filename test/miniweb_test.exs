@@ -1,4 +1,4 @@
-defmodule UwebTest do
+defmodule MiniwebTest do
   use ExUnit.Case
 
   test "the truth" do

@@ -1,7 +1,7 @@
 defmodule Router do
-  use MuWeb.Router
+  use Muweb.Router
 
-  import MuWeb.StockHandlers
+  import Miniweb.Handlers
 
   params [:root_dir]
 
@@ -19,7 +19,7 @@ end
 
 
 defmodule APIRouter do
-  use MuWeb.Router
+  use Muweb.Router
 
   handle "/", :post do
     reply(201)
@@ -53,4 +53,4 @@ end
 
 
 router = Router.init(root_dir: "example/priv/static")
-MuWeb.Server.start(router: router)
+Muweb.Server.start(router: router)

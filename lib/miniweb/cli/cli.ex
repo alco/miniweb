@@ -61,7 +61,7 @@ commands = [
   ],
 ]
 
-defmodule MuWeb.CLI do
+defmodule Miniweb.CLI do
   alias Commando.Cmd
 
   @help "Single task encapsulating a set of useful commands that utilise the μWeb server."
@@ -69,7 +69,7 @@ defmodule MuWeb.CLI do
   def task_help, do: @help
 
   @cmdspec Commando.new [
-    prefix: "mix", name: "muweb",
+    prefix: "mix", name: "uweb",
     version: "μWeb #{Mix.Project.config[:version]}",
 
     help: @help, options: options, commands: commands,
@@ -84,11 +84,11 @@ defmodule MuWeb.CLI do
   ])
 
   defp cmd_inspect(%Cmd{options: cmd_opts}, %Cmd{options: opts}) do
-    MuWeb.CLI.Inspect.run(opts[:port], cmd_opts[:reply_file])
+    Miniweb.CLI.Inspect.run(opts[:port], cmd_opts[:reply_file])
   end
 
   defp cmd_proxy(%Cmd{arguments: %{"url" => url}, options: cmd_opts}, %Cmd{options: opts}) do
-    MuWeb.CLI.Proxy.run(url, cmd_opts[:filter], opts[:port])
+    Miniweb.CLI.Proxy.run(url, cmd_opts[:filter], opts[:port])
   end
 
   defp cmd_serve(%Cmd{arguments: %{"path" => dir}, options: cmd_opts},
@@ -98,6 +98,6 @@ defmodule MuWeb.CLI do
       "." -> IO.puts "Serving current directory"
       _   -> IO.puts "Serving directory: #{dir}"
     end
-    MuWeb.CLI.Serve.run(dir, opts[:port], cmd_opts[:list])
+    Miniweb.CLI.Serve.run(dir, opts[:port], cmd_opts[:list])
   end
 end

@@ -1,7 +1,7 @@
-defmodule MuWeb.StockHandlers do
-  use MuWeb.Handler
+defmodule Miniweb.Handlers do
+  use Muweb.Handler
 
-  alias MuWeb.Server
+  alias Muweb.Server
 
   def inspect_handler(_path, opts, conn, req) do
     IO.puts Server.format_req(req)

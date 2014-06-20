@@ -1,7 +1,8 @@
-defmodule MuWeb.CLI.Inspect do
+defmodule Miniweb.CLI.Inspect do
   defmodule Router do
     @moduledoc false
-    use MuWeb.Router
+    use Muweb.Router
+    import Miniweb.Handlers
     params [:reply]
     handle _, _, &inspect_handler, reply: param(:reply)
   end
@@ -9,7 +10,7 @@ defmodule MuWeb.CLI.Inspect do
   def run(port, reply_file) do
     reply = check_reply_option(reply_file)
     router = Router.init(reply: reply)
-    MuWeb.Server.start(router: router, port: port)
+    Muweb.Server.start(router: router, port: port)
   end
 
   defp check_reply_option(reply_file) do

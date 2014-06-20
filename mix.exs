@@ -1,29 +1,21 @@
-defmodule MuWeb.Mixfile do
+defmodule Miniweb.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :muweb,
+    [app: :miniweb,
      version: "0.0.1",
-     elixir: "~> 0.13.1",
+     elixir: "~> 0.13.3 or ~> 0.14.0",
      deps: deps,
 
-     escript_main_module: MuWeb.CLI]
+     escript: [main_module: Miniweb.CLI]]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type `mix help compile.app` for more information
   def application do
-    [ applications: [],
-      mod: {MuWeb, []} ]
+    [mod: {Miniweb, []}]
   end
 
-  # List all dependencies in the format:
-  #
-  # {:foobar, git: "https://github.com/elixir-lang/foobar.git", tag: "0.1"}
-  #
-  # Type `mix help deps` for more examples and options
   defp deps do
-    [{:commando, github: "alco/commando"}]
+    [{:muweb, path: Path.expand("../muweb", __DIR__)},
+     {:commando, github: "alco/commando"}]
   end
 end
