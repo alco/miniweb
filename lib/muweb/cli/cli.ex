@@ -26,11 +26,24 @@ commands = [
   ],
 
   [name: "proxy",
-   arguments: [[name: "url", help: "URL to connect to."]],
+   arguments: [
+     [name: "url", help: "URL to connect to.", default: nil]
+   ],
+   options: [
+     [name: [:filter, :f], help: "Choose a filter to be applied to requests and responses."],
+   ],
    help: """
      Work as a tunnelling proxy, logging all communications. All traffic
      between client and remote server is transmitted without alterations, but
      all requests and responses are logged to stdout.
+
+     When a URL is specified, uWeb will establish a connection with the remote
+     host and will also listen on a local port. Any requests sent to it will be
+     transmitted to the remote host and any responses will be returned to the
+     client.
+
+     When no URL is specified, uWeb will simply listen on a local port, so it
+     can be used as a proxy.
      """,
   ],
 
@@ -74,8 +87,8 @@ defmodule MuWeb.CLI do
     MuWeb.CLI.Inspect.run(opts[:port], cmd_opts[:reply_file])
   end
 
-  defp cmd_proxy(%Cmd{arguments: %{"url" => url}}, %Cmd{options: opts}) do
-    MuWeb.CLI.Proxy.run(url, opts[:port])
+  defp cmd_proxy(%Cmd{arguments: %{"url" => url}, options: cmd_opts}, %Cmd{options: opts}) do
+    MuWeb.CLI.Proxy.run(url, cmd_opts[:filter], opts[:port])
   end
 
   defp cmd_serve(%Cmd{arguments: %{"path" => dir}, options: cmd_opts},

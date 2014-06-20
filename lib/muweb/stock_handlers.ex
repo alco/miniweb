@@ -19,28 +19,28 @@ defmodule MuWeb.StockHandlers do
     #IO.inspect remote_host
     #abort()
 
-    # TODO:
-    # - send request to remote host
-    # - log reply
-    {address, port} =
-      case String.split(remote_host, ":") do
-        [address, port] -> {address, String.to_integer(port)}
-        [address] -> {address, 80}
-      end
-    {:ok, sock} = :gen_tcp.connect(String.to_char_list(address), port, [{:packet, :http_bin}, {:active, :once}])
+    if remote_host do
+      {address, port} =
+        case String.split(remote_host, ":") do
+          [address, port] -> {address, String.to_integer(port)}
+          [address] -> {address, 80}
+        end
+      {:ok, sock} = :gen_tcp.connect(String.to_char_list(address), port, [{:packet, :http_bin}, {:active, :once}])
 
-    req = Map.update!(req, :headers, fn headers ->
-      Enum.map(headers, fn
-        {"Host", _}=x ->
-          IO.inspect x
-          {"Host", remote_host}
-        other -> other
+      req = Map.update!(req, :headers, fn headers ->
+        Enum.map(headers, fn
+          {"Host", _}=x ->
+            IO.inspect x
+            {"Host", remote_host}
+          other -> other
+        end)
       end)
-    end)
 
-    Server.send(sock, Server.format_req(req))
-    Server.spawn_client(sock, handler: &handle_proxy_response/3, state: conn)
-    :noclose
+      Server.send(sock, Server.format_req(req))
+      Server.spawn_client(sock, handler: &handle_proxy_response/3, state: conn)
+      :noclose
+    else
+    end
   end
 
   defp handle_proxy_response(req, _sock, old_sock) do

@@ -2,12 +2,12 @@ defmodule MuWeb.CLI.Proxy do
   defmodule Router do
     @moduledoc false
     use MuWeb.Router
-    params [:locations]
-    handle _, _, &proxy_handler, location: param(:location)
+    params [:location, :filter]
+    handle _, _, &proxy_handler, location: param(:location), filter: param(:filter)
   end
 
-  def run(url, port) do
-    router = Router.init(location: url)
+  def run(url, filter, port) do
+    router = Router.init(location: url, filter: filter)
     MuWeb.Server.start(router: router, port: port)
   end
 end
