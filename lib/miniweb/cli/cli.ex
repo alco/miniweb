@@ -61,21 +61,32 @@ commands = [
   ],
 ]
 
+help = "Single task encapsulating a set of useful commands that utilise the μWeb server."
+
+defmodule Miniweb.CLI.Definition do
+  @help help
+  @options options
+  @commands commands
+
+  def new(prefix) do
+    Commando.new [
+      prefix: prefix, name: "uweb",
+      version: "μWeb #{Mix.Project.config[:version]}",
+
+      help: @help, options: @options, commands: @commands,
+    ]
+  end
+end
+
 defmodule Miniweb.CLI do
   alias Commando.Cmd
 
-  @help "Single task encapsulating a set of useful commands that utilise the μWeb server."
-
+  @help help
   def task_help, do: @help
 
-  @cmdspec Commando.new [
-    prefix: "mix", name: "uweb",
-    version: "μWeb #{Mix.Project.config[:version]}",
+  @cmdspec Miniweb.CLI.Definition.new("")
 
-    help: @help, options: options, commands: commands,
-  ]
-
-  def main(args), do: Commando.exec(args, @cmdspec, actions: [
+  def main(args, spec \\ @cmdspec), do: Commando.exec(args, spec, actions: [
     commands: %{
       "inspect" => &cmd_inspect/2,
       "proxy"   => &cmd_proxy/2,

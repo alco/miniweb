@@ -7,7 +7,14 @@ defmodule Miniweb.Mixfile do
      elixir: "~> 0.13.3 or ~> 0.14.0",
      deps: deps,
 
-     escript: [main_module: Miniweb.CLI]]
+     escript_main_module: Miniweb.CLI,
+     escript_name: :uweb,
+
+     escript: [
+       main_module: Miniweb.CLI,
+       name: :uweb,
+     ],
+    ]
   end
 
   def application do

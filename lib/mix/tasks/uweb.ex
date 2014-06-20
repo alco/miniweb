@@ -9,6 +9,7 @@ defmodule Mix.Tasks.Uweb do
 
       mix uweb
   """
+  @cmdspec Miniweb.CLI.Definition.new("mix")
 
-  def run(args), do: Miniweb.CLI.main(args)
+  def run(args), do: Miniweb.CLI.main(args, @cmdspec)
 end
