@@ -10,26 +10,20 @@ web framework.
 ## Installation
 
 miniWeb is intended to be used as a command-line tool. You may build it from
-source or download a precompiled version with mix:
+source or download a precompiled escript from the [Releases][rel] page.
 
-```
-$ mix local.install https://github.com/alco/miniweb/releases/download/v1.0/miniweb-1.0.0.ez
-```
+  [rel]: https://github.com/alco/miniweb/releases
 
 
 ## Usage
 
-There are 3 primary utilities comprising miniWeb:
+There are 2 utilities comprising miniWeb:
 
-  1. **Inspect**. Allows you to dump requests from HTTP clients to console. It is
-     useful for debugging clients as not all of them have builtin facilities to
-     examine the data they are sending/receiving.
+  1. **Inspect**. Allows you to dump requests from HTTP clients to console. It
+     is useful for debugging clients as not all of them have builtin facilities
+     to examine the data they are sending/receiving.
 
-  2. **Proxy**. Works as an HTTP filter/proxy, transmitting data between the
-     client and a remote host, logging it in the processes or even modifying
-     parts of it according to the chosen filter.
-
-  3. **Serve**. Serves the contents of chosen directory over HTTP.
+  2. **Serve**. Serves the contents of chosen directory over HTTP.
 
 
 ## License
