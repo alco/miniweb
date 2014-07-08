@@ -25,28 +25,6 @@ commands = [
    ],
   ],
 
-  #  [name: "proxy",
-  #   arguments: [
-  #     [name: "url", help: "URL to connect to.", default: nil]
-  #   ],
-  #   options: [
-  #     [name: [:filter, :f], help: "Choose a filter to be applied to requests and responses."],
-  #   ],
-  #   help: """
-  #     Work as a tunnelling proxy, logging all communications. All traffic
-  #     between client and remote server is transmitted without alterations, but
-  #     all requests and responses are logged to stdout.
-  #
-  #     When a URL is specified, uWeb will establish a connection with the remote
-  #     host and will also listen on a local port. Any requests sent to it will be
-  #     transmitted to the remote host and any responses will be returned to the
-  #     client.
-  #
-  #     When no URL is specified, uWeb will simply listen on a local port, so it
-  #     can be used as a proxy.
-  #     """,
-  #  ],
-
   [name: "serve",
    help: "Serve files from the specified directory, recursively.",
    arguments: [[name: "path", default: "."]],
@@ -89,7 +67,6 @@ defmodule Miniweb.CLI do
   def main(args, spec \\ @cmdspec), do: Commando.exec(args, spec, actions: [
     commands: %{
       "inspect" => &cmd_inspect/2,
-      #"proxy"   => &cmd_proxy/2,
       "serve"   => &cmd_serve/2,
     }
   ])
@@ -97,10 +74,6 @@ defmodule Miniweb.CLI do
   defp cmd_inspect(%Cmd{options: cmd_opts}, %Cmd{options: opts}) do
     Miniweb.CLI.Inspect.run(opts[:port], cmd_opts[:reply_file])
   end
-
-  #  defp cmd_proxy(%Cmd{arguments: %{"url" => url}, options: cmd_opts}, %Cmd{options: opts}) do
-  #    Miniweb.CLI.Proxy.run(url, cmd_opts[:filter], opts[:port])
-  #  end
 
   defp cmd_serve(%Cmd{arguments: %{"path" => dir}, options: cmd_opts},
                 %Cmd{options: opts})

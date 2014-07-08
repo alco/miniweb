@@ -77,41 +77,4 @@ defmodule Miniweb.Handlers do
       _ -> {404, nil}
     end
   end
-
-  #  def proxy_handler(_path, opts, req) do
-  #    remote_host = opts[:location]
-  #    #IO.inspect path
-  #    #IO.inspect remote_host
-  #    #abort()
-  #
-  #    if remote_host do
-  #      {address, port} =
-  #        case String.split(remote_host, ":") do
-  #          [address, port] -> {address, String.to_integer(port)}
-  #          [address] -> {address, 80}
-  #        end
-  #      {:ok, sock} = :gen_tcp.connect(String.to_char_list(address), port, [{:packet, :http_bin}, {:active, :once}])
-  #
-  #      req = Map.update!(req, :headers, fn headers ->
-  #        Enum.map(headers, fn
-  #          {"Host", _}=x ->
-  #            IO.inspect x
-  #            {"Host", remote_host}
-  #          other -> other
-  #        end)
-  #      end)
-  #
-  #      Server.send(sock, Server.format_req(req))
-  #      Server.spawn_client(sock, handler: &handle_proxy_response/3, state: conn)
-  #      :noclose
-  #    else
-  #    end
-  #  end
-  #
-  #  defp handle_proxy_response(req, _sock, old_sock) do
-  #    response = Server.format_req(req)
-  #    IO.write response
-  #    :gen_tcp.send(old_sock, response)
-  #    :noreply
-  #  end
 end
