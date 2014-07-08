@@ -1,3 +1,6 @@
 use Mix.Config
 
-config :muweb, dbg_log_enabled: true
+cfg = Path.expand("#{Mix.env}.exs", __DIR__)
+if File.exists?(cfg) do
+  import_config cfg
+end
