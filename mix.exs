@@ -19,7 +19,7 @@ defmodule Miniweb.Mixfile do
   end
 
   defp deps do
-    [{:muweb, path: Path.expand("../muweb", __DIR__)},
+    [{:muweb, github: "alco/muweb"},
      {:commando, github: "alco/commando"}]
   end
 end
