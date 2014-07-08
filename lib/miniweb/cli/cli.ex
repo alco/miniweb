@@ -54,13 +54,12 @@ defmodule Miniweb.CLI.Definition do
       help: @help, options: @options, commands: @commands,
     ]
   end
+
+  def task_help, do: @help
 end
 
 defmodule Miniweb.CLI do
   alias Commando.Cmd
-
-  @help help
-  def task_help, do: @help
 
   @cmdspec Miniweb.CLI.Definition.new("")
 

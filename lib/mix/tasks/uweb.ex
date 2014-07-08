@@ -1,7 +1,7 @@
 defmodule Mix.Tasks.Uweb do
   use Mix.Task
 
-  @shortdoc Miniweb.CLI.task_help
+  @shortdoc Miniweb.CLI.Definition.task_help
   @moduledoc """
   #{@shortdoc}
 
