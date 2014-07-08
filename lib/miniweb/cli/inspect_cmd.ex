@@ -3,7 +3,6 @@ defmodule Miniweb.CLI.Inspect do
     @moduledoc false
     use Muweb.Router
     import Miniweb.Handlers
-    params [:reply]
     handle _, _, &inspect_handler, reply: param(:reply)
   end
 

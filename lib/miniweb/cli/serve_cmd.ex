@@ -3,7 +3,6 @@ defmodule Miniweb.CLI.Serve do
     @moduledoc false
     use Muweb.Router
     import Miniweb.Handlers
-    params [:root_dir, :listdir]
     handle _, [:get, :head], &static_handler,
                                 root: param(:root_dir), listdir: param(:listdir)
   end

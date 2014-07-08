@@ -3,8 +3,6 @@ defmodule Router do
 
   import Miniweb.Handlers
 
-  params [:root_dir]
-
 
   mount "/api", Elixir.APIRouter
 
@@ -14,7 +12,7 @@ defmodule Router do
   handle _,   [:head, :get], &static_handler,
     root: param(:root_dir)
 
-  handle _, _, do: reply("Forbidden")
+  handle _, _, do: ireply("Forbidden")
 end
 
 
@@ -22,19 +20,19 @@ defmodule APIRouter do
   use Muweb.Router
 
   handle "/", :post do
-    reply(201)
+    ireply(201)
   end
 
   handle "/random", :get, wrap(Util.random, [])
 
   handle "/random_int", :get do
-    min = query("min", "0") |> binary_to_integer
-    max = query("max", "1000000") |> binary_to_integer
-    reply(200, Util.random(min, max) |> to_string)
+    min = iquery("min", "0") |> String.to_integer
+    max = iquery("max", "1000000") |> String.to_integer
+    ireply(200, Util.random(min, max) |> to_string)
   end
 
   handle _, _ do
-    reply(403)
+    ireply(403)
   end
 end
 
