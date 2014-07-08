@@ -9,7 +9,7 @@ defmodule Miniweb.CLI.Inspect do
   def run(port, reply_file) do
     reply = check_reply_option(reply_file)
     router = Router.init(reply: reply)
-    Muweb.Server.start(router: router, port: port)
+    Muweb.Server.start_link(router: router, port: port)
   end
 
   defp check_reply_option(reply_file) do

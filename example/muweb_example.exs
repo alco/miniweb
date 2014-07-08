@@ -51,4 +51,4 @@ end
 
 
 router = Router.init(root_dir: "example/priv/static")
-Muweb.Server.start(router: router)
+Muweb.Server.start_link(router: router, log_enabled: true)

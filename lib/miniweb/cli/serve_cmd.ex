@@ -9,6 +9,6 @@ defmodule Miniweb.CLI.Serve do
 
   def run(path, port, listdir) do
     router = Router.init(root_dir: path, listdir: listdir)
-    Muweb.Server.start(router: router, port: port)
+    Muweb.Server.start_link(router: router, port: port)
   end
 end
