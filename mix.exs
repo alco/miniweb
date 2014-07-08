@@ -3,8 +3,8 @@ defmodule Miniweb.Mixfile do
 
   def project do
     [app: :miniweb,
-     version: "0.0.1",
-     elixir: "~> 0.13.3 or ~> 0.14.0",
+     version: "0.1.0",
+     elixir: "~> 0.14.0",
      deps: deps,
 
      escript: [
@@ -15,7 +15,7 @@ defmodule Miniweb.Mixfile do
   end
 
   def application do
-    [mod: {Miniweb, []}]
+    []
   end
 
   defp deps do
