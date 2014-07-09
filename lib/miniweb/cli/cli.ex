@@ -63,6 +63,11 @@ defmodule Miniweb.CLI do
 
   @cmdspec Miniweb.CLI.Definition.new("")
 
+  def start() do
+    Enum.map(:init.get_plain_arguments, &List.to_string/1)
+    |> main()
+  end
+
   def main(args, spec \\ @cmdspec), do: Commando.exec(args, spec, actions: [
     commands: %{
       "inspect" => &cmd_inspect/2,

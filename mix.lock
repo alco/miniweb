@@ -1,2 +1,4 @@
 %{"commando": {:git, "git://github.com/alco/commando.git", "d810bc6b6a52a79218f7d8bc33fc13d375e39b48", []},
+  "conform": {:package, "0.7.4"},
+  "exrm": {:git, "git://github.com/alco/exrm.git", "c305866274c30f45e8698426aa33de85004da910", [ref: "cli"]},
   "muweb": {:git, "git://github.com/alco/muweb.git", "3eab0489ba025a66393fb98da0bdbcac0c3cd011", []}}

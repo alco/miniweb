@@ -11,15 +11,20 @@ defmodule Miniweb.Mixfile do
        main_module: Miniweb.CLI,
        name: :uweb,
      ],
+
+     release: [
+       main_module: Miniweb.CLI,
+     ],
     ]
   end
 
   def application do
-    []
+    [applications: [:muweb, :commando]]
   end
 
   defp deps do
     [{:muweb, github: "alco/muweb"},
-     {:commando, github: "alco/commando"}]
+     {:commando, github: "alco/commando"},
+     {:exrm, github: "alco/exrm", ref: "cli", only: :rel}]
   end
 end
