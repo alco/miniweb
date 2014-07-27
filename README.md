@@ -14,6 +14,8 @@ source or download a precompiled escript from the [Releases][rel] page.
 
   [rel]: https://github.com/alco/miniweb/releases
 
+To build from source, run `mix escript.build` inside the project root.
+
 
 ## Usage
 
