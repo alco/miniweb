@@ -6,6 +6,9 @@ options = [
 
   [name: [:port, :p], argtype: :integer, default: 9000,
    help: "Port number to listen on."],
+
+  [name: [:debug, :d], argtype: :boolean,
+   help: "Print debug info."],
 ]
 
 commands = [
@@ -76,6 +79,9 @@ defmodule Miniweb.CLI do
   ])
 
   defp cmd_inspect(%Cmd{options: cmd_opts}, %Cmd{options: opts}) do
+    unless check_debug(opts) do
+      IO.puts "Listening on port #{opts[:port]}"
+    end
     Miniweb.CLI.Inspect.run(opts[:port], cmd_opts[:reply_file])
   end
 
@@ -83,9 +89,21 @@ defmodule Miniweb.CLI do
                 %Cmd{options: opts})
   do
     case dir do
-      "." -> IO.puts "Serving current directory"
-      _   -> IO.puts "Serving directory: #{dir}"
+      "." -> IO.write "Serving current directory "
+      _   -> IO.write "Serving directory: #{dir} "
+    end
+    if check_debug(opts) do
+      IO.puts ""
+    else
+      IO.puts "on port #{opts[:port]}"
     end
     Miniweb.CLI.Serve.run(dir, opts[:port], cmd_opts[:list])
+  end
+
+  defp check_debug(opts) do
+    if opts[:debug] do
+      Application.put_env(:muweb, :dbg_log_enabled, true)
+      true
+    end
   end
 end
